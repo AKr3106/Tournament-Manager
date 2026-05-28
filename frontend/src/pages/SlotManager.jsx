@@ -180,7 +180,7 @@ const SlotManager = () => {
                         </div>
                     </div>
 
-                    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 max-h-[500px] overflow-y-auto custom-scrollbar">
+                    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 max-h-125 overflow-y-auto custom-scrollbar">
                         <h3 className="font-semibold text-slate-300 mb-3">Available Slots ({slots.length})</h3>
                         {slots.length === 0 ? (
                             <p className="text-sm text-slate-500 text-center py-4">No slots created yet</p>
