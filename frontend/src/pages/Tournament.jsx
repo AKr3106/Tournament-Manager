@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import TeamCard from '../components/TeamCard';
 import SeasonButton from '../components/SeasonButton';
 import PlayerCard from '../components/PlayerCard';
+import API_BASE from '../api';
 
 const Tournament = () => {
   const [players, setPlayers] = useState([]);
@@ -15,9 +16,9 @@ const Tournament = () => {
     const fetchData = async () => {
       try {
         const [playersRes, teamsRes, lotteryRes] = await Promise.all([
-          fetch("http://localhost:3000/api/players"),
-          fetch("http://localhost:3000/api/teams"),
-          fetch("http://localhost:3000/api/lottery/state", { credentials: "include" }).catch(() => null)
+          fetch(`${API_BASE}/players`),
+          fetch(`${API_BASE}/teams`),
+          fetch(`${API_BASE}/lottery/state`, { credentials: "include" }).catch(() => null)
         ]);
         
         const playersData = await playersRes.json();

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import AdminLottery from './AdminLottery';
 import SlotManager from './SlotManager';
+import API_BASE from '../api';
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('players');
@@ -26,19 +27,19 @@ const Admin = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const playersRes = await fetch("http://localhost:3000/api/players");
+        const playersRes = await fetch(`${API_BASE}/players`);
         const playersData = await playersRes.json();
         if (playersData.success) {
           setPlayers(playersData.players);
         }
 
-        const teamsRes = await fetch("http://localhost:3000/api/teams");
+        const teamsRes = await fetch(`${API_BASE}/teams`);
         const teamsData = await teamsRes.json();
         if (teamsData.success) {
           setTeams(teamsData.teams);
         }
 
-        const lotteryRes = await fetch("http://localhost:3000/api/lottery/state", { credentials: "include" });
+        const lotteryRes = await fetch(`${API_BASE}/lottery/state`, { credentials: "include" });
         const lotteryData = await lotteryRes.json();
         if (lotteryData.success && lotteryData.state) {
           setDraftResults(lotteryData.state.draftResults || {});
@@ -54,7 +55,7 @@ const Admin = () => {
   const handleAddPlayer = async () => {
     if (!newPlayerName.trim()) return;
     try {
-      const res = await fetch("http://localhost:3000/api/players", {
+      const res = await fetch(`${API_BASE}/players`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -81,7 +82,7 @@ const Admin = () => {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/players/${index}`, {
+      const res = await fetch(`${API_BASE}/players/${index}`, {
         method: "DELETE",
         credentials: "include"
       });
@@ -110,7 +111,7 @@ const Admin = () => {
     if (!confirmUpdate) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/players/${index}`, {
+      const res = await fetch(`${API_BASE}/players/${index}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: editingPlayerName.trim(), position: editingPlayerPosition }),
@@ -133,7 +134,7 @@ const Admin = () => {
   const handleAddTeam = async () => {
     if (!newTeamName.trim()) return;
     try {
-      const res = await fetch("http://localhost:3000/api/teams", {
+      const res = await fetch(`${API_BASE}/teams`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -159,7 +160,7 @@ const Admin = () => {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/teams/${index}`, {
+      const res = await fetch(`${API_BASE}/teams/${index}`, {
         method: "DELETE",
         credentials: "include"
       });
@@ -191,7 +192,7 @@ const Admin = () => {
     if (!confirmUpdate) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/teams/${index}`, {
+      const res = await fetch(`${API_BASE}/teams/${index}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ "team-name": editingTeamName.trim() }),

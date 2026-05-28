@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import API_BASE from '../api';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const SignIn = () => {
 
     const handleCredentialResponse = async (response) => {
       try {
-        const res = await fetch("http://localhost:3000/api/auth/google", {
+        const res = await fetch(`${API_BASE}/auth/google`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ credential: response.credential }),
@@ -115,7 +116,7 @@ const SignIn = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -136,7 +137,7 @@ const SignIn = () => {
       // Check if user is attempting to sign in as admin but doesn't have the admin role
       if (role === 'admin' && data.user.role !== 'admin') {
         try {
-          await fetch("http://localhost:3000/api/auth/logout", {
+          await fetch(`${API_BASE}/auth/logout`, {
             method: "POST",
             credentials: "include"
           });

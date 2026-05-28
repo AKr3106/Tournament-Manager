@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-const API_BASE = "http://localhost:3000/api";
+import API_BASE from '../api';
 
 const Lottery = () => {
   const [teams, setTeams] = useState([]);

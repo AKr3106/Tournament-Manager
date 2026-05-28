@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import TeamCard from '../components/TeamCard';
 import SeasonButton from '../components/SeasonButton';
 import PlayerCard from '../components/PlayerCard';
+import API_BASE from '../api';
 
 const TournamentS1 = () => {
   const [players, setPlayers] = useState([]);
@@ -10,7 +11,7 @@ const TournamentS1 = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const playersRes = await fetch("http://localhost:3000/api/players");
+        const playersRes = await fetch(`${API_BASE}/players`);
         const playersData = await playersRes.json();
 
         if (playersData.success) {

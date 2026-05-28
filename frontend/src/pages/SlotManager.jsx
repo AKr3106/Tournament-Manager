@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE from '../api';
 
 const SlotManager = () => {
     const [slots, setSlots] = useState([]);
@@ -9,13 +10,13 @@ const SlotManager = () => {
     // Fetch slots and players
     const fetchData = async () => {
         try {
-            const slotsRes = await fetch("http://localhost:3000/api/slots", { credentials: "include" });
+            const slotsRes = await fetch(`${API_BASE}/slots`, { credentials: "include" });
             const slotsData = await slotsRes.json();
             if (slotsData.success) {
                 setSlots(slotsData.slots);
             }
 
-            const playersRes = await fetch("http://localhost:3000/api/players", { credentials: "include" });
+            const playersRes = await fetch(`${API_BASE}/players`, { credentials: "include" });
             const playersData = await playersRes.json();
             if (playersData.success) {
                 setPlayers(playersData.players);
@@ -32,7 +33,7 @@ const SlotManager = () => {
     const handleCreateSlot = async () => {
         if (!newSlotName.trim()) return;
         try {
-            const res = await fetch("http://localhost:3000/api/slots", {
+            const res = await fetch(`${API_BASE}/slots`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: newSlotName }),
@@ -53,7 +54,7 @@ const SlotManager = () => {
     const handleDeleteSlot = async (index) => {
         if (!window.confirm("Are you sure you want to delete this slot?")) return;
         try {
-            const res = await fetch(`http://localhost:3000/api/slots/${index}`, {
+            const res = await fetch(`${API_BASE}/slots/${index}`, {
                 method: "DELETE",
                 credentials: "include"
             });
@@ -83,7 +84,7 @@ const SlotManager = () => {
         const updatedPlayers = [...slot.players, player];
 
         try {
-            const res = await fetch(`http://localhost:3000/api/slots/${selectedSlotIndex}`, {
+            const res = await fetch(`${API_BASE}/slots/${selectedSlotIndex}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ players: updatedPlayers }),
@@ -109,7 +110,7 @@ const SlotManager = () => {
         const updatedPlayers = slot.players.filter(p => p.index !== playerIndex);
 
         try {
-            const res = await fetch(`http://localhost:3000/api/slots/${selectedSlotIndex}`, {
+            const res = await fetch(`${API_BASE}/slots/${selectedSlotIndex}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ players: updatedPlayers }),

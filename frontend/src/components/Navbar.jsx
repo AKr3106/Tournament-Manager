@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../images/rkm_legacy_league_logo.svg';
+import API_BASE from '../api';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -48,7 +49,7 @@ const Navbar = () => {
 
     const handleLogout = async () => {
         try {
-            await fetch("http://localhost:3000/api/auth/logout", {
+            await fetch(`${API_BASE}/auth/logout`, {
                 method: "POST",
                 credentials: "include"
             });

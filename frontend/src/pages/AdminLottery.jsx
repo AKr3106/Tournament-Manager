@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 
-// Dynamically sets the API base based on whether you are running locally or on production
-const API_BASE = import.meta.env.MODE === "development" 
-  ? "http://localhost:3000/api" 
-  : "/api";
+import API_BASE from '../api';
 
 const AdminLottery = () => {
   // Database lists

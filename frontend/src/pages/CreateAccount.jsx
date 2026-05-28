@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import API_BASE from '../api';
 
 const CreateAccount = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const CreateAccount = () => {
 
     const handleCredentialResponse = async (response) => {
       try {
-        const res = await fetch("http://localhost:3000/api/auth/google", {
+        const res = await fetch(`${API_BASE}/auth/google`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ credential: response.credential }),
@@ -136,7 +137,7 @@ const CreateAccount = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("http://localhost:3000/api/auth/register", {
+      const response = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

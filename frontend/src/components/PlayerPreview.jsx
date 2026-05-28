@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import PlayerCard from './PlayerCard'
+import API_BASE from '../api'
 
 const PlayerPreview = () => {
   const [players, setPlayers] = useState([]);
@@ -8,7 +9,7 @@ const PlayerPreview = () => {
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/players");
+        const response = await fetch(`${API_BASE}/players`);
         const data = await response.json();
         if (data.success) {
           setPlayers(data.players);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PlayerCard from '../components/PlayerCard';
+import API_BASE from '../api';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -80,8 +81,8 @@ const Profile = () => {
     const fetchData = async () => {
       try {
         const [playersRes, teamsRes] = await Promise.all([
-          fetch("http://localhost:3000/api/players"),
-          fetch("http://localhost:3000/api/teams")
+          fetch(`${API_BASE}/players`),
+          fetch(`${API_BASE}/teams`)
         ]);
         const playersData = await playersRes.json();
         const teamsData = await teamsRes.json();
@@ -105,7 +106,7 @@ const Profile = () => {
     e.preventDefault();
     setUpdating(true);
     try {
-      const res = await fetch("http://localhost:3000/api/auth/profile", {
+      const res = await fetch(`${API_BASE}/auth/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
