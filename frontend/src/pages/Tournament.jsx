@@ -127,24 +127,31 @@ const Tournament = () => {
     localStorage.setItem('rkm_s2_fixtures', JSON.stringify(fixtures));
   }, [fixtures]);
 
-  // Sync fixture names with dynamic team names
-  useEffect(() => {
-    if (teams.length >= 6) {
-      setFixtures(prev => prev.map((f, i) => {
-        const mappings = [
-          [0, 2], [1, 3], [2, 4], [3, 5], [4, 0], [5, 1]
-        ];
-        if (mappings[i]) {
-          return {
-            ...f,
-            team1: teams[mappings[i][0]]?.name || f.team1,
-            team2: teams[mappings[i][1]]?.name || f.team2
-          };
-        }
-        return f;
-      }));
+  // Dynamic helper to resolve team names for fixtures at render-time
+  const getFixtureTeams = (fixtureIndex) => {
+    const mappings = [
+      [0, 2], [1, 3], [2, 4], [3, 5], [4, 0], [5, 1]
+    ];
+    const map = mappings[fixtureIndex];
+    if (map && teams.length >= 6) {
+      return {
+        team1: teams[map[0]]?.name || `Team ${String.fromCharCode(65 + map[0])}`,
+        team2: teams[map[1]]?.name || `Team ${String.fromCharCode(65 + map[1])}`
+      };
     }
-  }, [teams.map(t => t.name).join(',')]);
+    const fallbackLetters = [
+      ['Team A', 'Team C'],
+      ['Team B', 'Team D'],
+      ['Team C', 'Team E'],
+      ['Team D', 'Team F'],
+      ['Team E', 'Team A'],
+      ['Team F', 'Team B']
+    ];
+    return {
+      team1: fallbackLetters[fixtureIndex]?.[0] || 'Team 1',
+      team2: fallbackLetters[fixtureIndex]?.[1] || 'Team 2'
+    };
+  };
 
   useEffect(() => {
     localStorage.setItem('rkm_s2_finalScore', JSON.stringify(finalScore));
@@ -195,8 +202,9 @@ const Tournament = () => {
       };
     });
 
-    fixtures.forEach(match => {
-      const { team1, team2, score1, score2 } = match;
+    fixtures.forEach((match, idx) => {
+      const { score1, score2 } = match;
+      const { team1, team2 } = getFixtureTeams(idx);
       if (score1 !== '' && score2 !== '' && score1 !== null && score2 !== null && initialStats[team1] && initialStats[team2]) {
         const s1 = parseInt(score1, 10);
         const s2 = parseInt(score2, 10);
@@ -526,59 +534,62 @@ const Tournament = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {fixtures.map((fixture, index) => (
-              <div 
-                key={index} 
-                className="flex items-center justify-between bg-slate-950/60 border border-white/5 rounded-2xl p-4 hover:border-indigo-500/20 transition-all duration-300"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
-                    {fixture.id}
-                  </span>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                    Group {fixture.group}
-                  </span>
+            {fixtures.map((fixture, index) => {
+              const { team1: displayTeam1, team2: displayTeam2 } = getFixtureTeams(index);
+              return (
+                <div 
+                  key={index} 
+                  className="flex items-center justify-between bg-slate-950/60 border border-white/5 rounded-2xl p-4 hover:border-indigo-500/20 transition-all duration-300"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                      {fixture.id}
+                    </span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                      Group {fixture.group}
+                    </span>
+                  </div>
+                  
+                  {isEditing ? (
+                    <div className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-slate-200">
+                      <span>{displayTeam1}</span>
+                      <input
+                        type="number"
+                        value={fixture.score1}
+                        min="0"
+                        placeholder="-"
+                        onChange={(e) => handleScoreChange(index, 'score1', e.target.value)}
+                        className="w-10 text-center bg-slate-900 border border-white/10 rounded px-1 py-0.5 text-xs text-indigo-400 focus:outline-none focus:border-indigo-500"
+                      />
+                      <span className="text-[10px] text-slate-500">—</span>
+                      <input
+                        type="number"
+                        value={fixture.score2}
+                        min="0"
+                        placeholder="-"
+                        onChange={(e) => handleScoreChange(index, 'score2', e.target.value)}
+                        className="w-10 text-center bg-slate-900 border border-white/10 rounded px-1 py-0.5 text-xs text-indigo-400 focus:outline-none focus:border-indigo-500"
+                      />
+                      <span>{displayTeam2}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 font-semibold text-xs sm:text-sm text-slate-200">
+                      <span>{displayTeam1}</span>
+                      {fixture.score1 !== '' && fixture.score2 !== '' ? (
+                        <span className="text-sm font-extrabold text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded font-mono">
+                          {fixture.score1} — {fixture.score2}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-indigo-400 bg-indigo-500/5 border border-indigo-500/10 px-1.5 py-0.5 rounded font-mono font-bold">VS</span>
+                      )}
+                      <span>{displayTeam2}</span>
+                    </div>
+                  )}
+                  
+                  <span className="text-xs text-slate-500 font-mono hidden sm:inline">({fixture.format})</span>
                 </div>
-                
-                {isEditing ? (
-                  <div className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-slate-200">
-                    <span>{fixture.team1}</span>
-                    <input
-                      type="number"
-                      value={fixture.score1}
-                      min="0"
-                      placeholder="-"
-                      onChange={(e) => handleScoreChange(index, 'score1', e.target.value)}
-                      className="w-10 text-center bg-slate-900 border border-white/10 rounded px-1 py-0.5 text-xs text-indigo-400 focus:outline-none focus:border-indigo-500"
-                    />
-                    <span className="text-[10px] text-slate-500">—</span>
-                    <input
-                      type="number"
-                      value={fixture.score2}
-                      min="0"
-                      placeholder="-"
-                      onChange={(e) => handleScoreChange(index, 'score2', e.target.value)}
-                      className="w-10 text-center bg-slate-900 border border-white/10 rounded px-1 py-0.5 text-xs text-indigo-400 focus:outline-none focus:border-indigo-500"
-                    />
-                    <span>{fixture.team2}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 font-semibold text-xs sm:text-sm text-slate-200">
-                    <span>{fixture.team1}</span>
-                    {fixture.score1 !== '' && fixture.score2 !== '' ? (
-                      <span className="text-sm font-extrabold text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded font-mono">
-                        {fixture.score1} — {fixture.score2}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-indigo-400 bg-indigo-500/5 border border-indigo-500/10 px-1.5 py-0.5 rounded font-mono font-bold">VS</span>
-                    )}
-                    <span>{fixture.team2}</span>
-                  </div>
-                )}
-                
-                <span className="text-xs text-slate-500 font-mono hidden sm:inline">({fixture.format})</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Grand Final Card */}
