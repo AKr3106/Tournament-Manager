@@ -1,13 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../images/rkm_legacy_league_logo.svg';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const [user, setUser] = useState(() => {
+        try {
+            const savedUser = localStorage.getItem('user');
+            return savedUser ? JSON.parse(savedUser) : null;
+        } catch {
+            return null;
+        }
+    });
+
     const [theme, setTheme] = useState(() => {
         const saved = localStorage.getItem('rkm_theme');
         return saved ? saved : 'dark';
     });
+
+    // Update user state when location changes (i.e. redirects after login/logout)
+    useEffect(() => {
+        Promise.resolve().then(() => {
+            try {
+                const savedUser = localStorage.getItem('user');
+                setUser(savedUser ? JSON.parse(savedUser) : null);
+            } catch {
+                setUser(null);
+            }
+        });
+    }, [location]);
 
     useEffect(() => {
         if (theme === 'light') {
@@ -22,13 +46,28 @@ const Navbar = () => {
         setTheme(prev => prev === 'dark' ? 'light' : 'dark');
     };
 
+    const handleLogout = async () => {
+        try {
+            await fetch("http://localhost:3000/api/auth/logout", {
+                method: "POST",
+                credentials: "include"
+            });
+        } catch (err) {
+            console.error("Logout API call failed:", err);
+        }
+        localStorage.removeItem('user');
+        setUser(null);
+        alert("Logged out successfully");
+        navigate('/');
+    };
+
     return (
         <nav className="fixed w-full z-50 top-0 transition-all duration-300 bg-slate-950/50 backdrop-blur-md border-b border-white/10 shadow-lg">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-24">
                     {/* Logo */}
-                    <div className="shrink-0 flex items-center gap-2 md:gap-3 cursor-pointer group">
-                        <img 
+                    <div className="shrink-0 flex items-center gap-2 md:gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+                        <img
                             src={logo}
                             alt="RKM Legacy League Logo"
                             className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-lg group-hover:drop-shadow-[0_0_8px_rgba(99,102,241,0.6)] transition-all duration-300 transform group-hover:scale-105"
@@ -45,7 +84,9 @@ const Navbar = () => {
                         <Link to="/tournament" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Tournament</Link>
                         <Link to="/players" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Players</Link>
                         <Link to="/rules" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Rules</Link>
-                        <Link to="/admin" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Admin</Link>
+                        {user && user.role === 'admin' && (
+                            <Link to="/admin" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Admin</Link>
+                        )}
                         {/* Theme Toggle */}
                         <button
                             onClick={toggleTheme}
@@ -63,9 +104,30 @@ const Navbar = () => {
                                 </svg>
                             )}
                         </button>
-                        <Link to="/signin" className="px-5 py-2 rounded-full bg-linear-to-r from-indigo-500 to-purple-600 text-white font-medium text-sm hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-0.5 text-center">
-                            Sign In
-                        </Link>
+
+                        {user ? (
+                            <div className="flex items-center gap-4">
+                                <Link
+                                    to="/profile"
+                                    className="px-4 py-2 rounded-full border border-indigo-500/30 hover:border-indigo-500/60 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-200 hover:text-white transition-all duration-300 font-semibold text-sm cursor-pointer flex items-center gap-2 shadow-inner"
+                                >
+                                    <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <span>Hello, {user.name}</span>
+                                </Link>
+                                <button
+                                    onClick={handleLogout}
+                                    className="px-5 py-2 rounded-full border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-300 text-slate-300 hover:text-white font-medium text-sm cursor-pointer"
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
+                        ) : (
+                            <Link to="/signin" className="px-5 py-2 rounded-full bg-linear-to-r from-indigo-500 to-purple-600 text-white font-medium text-sm hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-0.5 text-center">
+                                Sign In
+                            </Link>
+                        )}
                     </div>
 
                     {/* Mobile menu button */}
@@ -95,7 +157,9 @@ const Navbar = () => {
                         <Link to="/players" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Players</Link>
                         <Link to="/leaderboard" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Leaderboard</Link>
                         <Link to="/about" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">About</Link>
-                        <Link to="/admin" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Admin</Link>
+                        {user && user.role === 'admin' && (
+                            <Link to="/admin" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Admin</Link>
+                        )}
                         <Link to="/lottery" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Lottery</Link>
                         {/* Mobile Theme Toggle */}
                         <button
@@ -116,9 +180,31 @@ const Navbar = () => {
                                 </svg>
                             )}
                         </button>
-                        <Link to="/signin" onClick={() => setIsOpen(false)} className="w-full mt-4 px-5 py-2 rounded-full bg-linear-to-r from-indigo-500 to-purple-600 text-white font-medium text-sm hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 block text-center">
-                            Sign In
-                        </Link>
+
+                        {user ? (
+                            <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
+                                <Link
+                                    to="/profile"
+                                    onClick={() => setIsOpen(false)}
+                                    className="block px-3 py-2 rounded-md text-base font-semibold text-indigo-400 hover:text-white hover:bg-white/5 transition-colors"
+                                >
+                                    Hello, {user.name} (View Profile)
+                                </Link>
+                                <button
+                                    onClick={() => {
+                                        handleLogout();
+                                        setIsOpen(false);
+                                    }}
+                                    className="w-full px-5 py-2 rounded-full border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-300 text-slate-300 hover:text-white font-medium text-sm block text-center cursor-pointer"
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
+                        ) : (
+                            <Link to="/signin" onClick={() => setIsOpen(false)} className="w-full mt-4 px-5 py-2 rounded-full bg-linear-to-r from-indigo-500 to-purple-600 text-white font-medium text-sm hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 block text-center">
+                                Sign In
+                            </Link>
+                        )}
                     </div>
                 </div>
             )}

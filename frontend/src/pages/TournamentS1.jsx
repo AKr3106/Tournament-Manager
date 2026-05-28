@@ -1,13 +1,37 @@
-import React from 'react'
+import { useState, useEffect } from 'react'
 import TeamCard from '../components/TeamCard';
 import SeasonButton from '../components/SeasonButton';
-import playersData from '../assets/team_list.json';
-import teamNamesData from '../assets/team_name.json';
 import PlayerCard from '../components/PlayerCard';
 
 const TournamentS1 = () => {
-  const goldenBallBootPlayer = playersData.find(p => p.index === 16);
-  const goldenGlovesPlayer = playersData.find(p => p.index === 17);
+  const [players, setPlayers] = useState([]);
+  const [teamNames, setTeamNames] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [playersRes, teamsRes] = await Promise.all([
+          fetch("http://localhost:3000/api/players"),
+          fetch("http://localhost:3000/api/teams")
+        ]);
+        const playersData = await playersRes.json();
+        const teamsData = await teamsRes.json();
+
+        if (playersData.success) {
+          setPlayers(playersData.players);
+        }
+        if (teamsData.success) {
+          setTeamNames(teamsData.teams);
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const goldenBallBootPlayer = players.find(p => p.index === 16);
+  const goldenGlovesPlayer = players.find(p => p.index === 17);
   const colors = [
     'from-blue-500 to-cyan-500 shadow-blue-500/20',
     'from-purple-500 to-pink-500 shadow-purple-500/20',
@@ -17,9 +41,9 @@ const TournamentS1 = () => {
     'from-indigo-500 to-violet-500 shadow-indigo-500/20'
   ];
 
-  const teams = teamNamesData.map((t, idx) => {
+  const teams = teamNames.map((t, idx) => {
     const startIdx = idx * 5;
-    const teamPlayers = playersData.slice(startIdx, startIdx + 5).map(player => ({
+    const teamPlayers = players.slice(startIdx, startIdx + 5).map(player => ({
       ...player,
       isCaptain: [1, 6, 11, 16, 21, 26].includes(player.index)
     }));

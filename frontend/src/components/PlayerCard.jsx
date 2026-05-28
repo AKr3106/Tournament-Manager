@@ -1,5 +1,3 @@
-import React from 'react';
-
 const PlayerCard = ({ player }) => {
   // If no player is passed, render a skeleton/placeholder
   if (!player) {

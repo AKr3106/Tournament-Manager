@@ -1,78 +1,212 @@
-import React, { useState, useEffect } from 'react'
-import Lottery from './Lottery';
+import { useState, useEffect } from 'react'
+import AdminLottery from './AdminLottery';
+import SlotManager from './SlotManager';
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('players');
 
   // ─── Player Management State ───
-  const [players, setPlayers] = useState(() => {
-    const saved = localStorage.getItem('rkm_admin_players');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [players, setPlayers] = useState([]);
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerPosition, setNewPlayerPosition] = useState('FW');
+  const [editingPlayerIndex, setEditingPlayerIndex] = useState(null);
+  const [editingPlayerName, setEditingPlayerName] = useState('');
 
   // ─── Team Management State ───
-  const [teams, setTeams] = useState(() => {
-    const saved = localStorage.getItem('rkm_admin_teams');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [teams, setTeams] = useState([]);
   const [newTeamName, setNewTeamName] = useState('');
+  const [editingTeamIndex, setEditingTeamIndex] = useState(null);
+  const [editingTeamName, setEditingTeamName] = useState('');
 
   // ─── Lottery Draft State ───
-  const [draftResults, setDraftResults] = useState(() => {
-    const saved = localStorage.getItem('rkm_admin_draft');
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [draftResults, setDraftResults] = useState({});
 
-  // ─── Persist to localStorage ───
+  // Fetch players and teams from backend database on mount
   useEffect(() => {
-    localStorage.setItem('rkm_admin_players', JSON.stringify(players));
-  }, [players]);
+    const fetchData = async () => {
+      try {
+        const playersRes = await fetch("http://localhost:3000/api/players");
+        const playersData = await playersRes.json();
+        if (playersData.success) {
+          setPlayers(playersData.players);
+        }
 
-  useEffect(() => {
-    localStorage.setItem('rkm_admin_teams', JSON.stringify(teams));
-  }, [teams]);
+        const teamsRes = await fetch("http://localhost:3000/api/teams");
+        const teamsData = await teamsRes.json();
+        if (teamsData.success) {
+          setTeams(teamsData.teams);
+        }
 
-  useEffect(() => {
-    localStorage.setItem('rkm_admin_draft', JSON.stringify(draftResults));
-  }, [draftResults]);
-
-  // Sync draftResults from localStorage if updated in another tab/window
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const savedDraft = localStorage.getItem('rkm_admin_draft');
-      if (savedDraft) setDraftResults(JSON.parse(savedDraft));
+        const lotteryRes = await fetch("http://localhost:3000/api/lottery/state", { credentials: "include" });
+        const lotteryData = await lotteryRes.json();
+        if (lotteryData.success && lotteryData.state) {
+          setDraftResults(lotteryData.state.draftResults || {});
+        }
+      } catch (err) {
+        console.error("Error fetching data from database:", err);
+      }
     };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    fetchData();
   }, []);
 
   // ─── Player Handlers ───
-  const handleAddPlayer = () => {
+  const handleAddPlayer = async () => {
     if (!newPlayerName.trim()) return;
-    const nextIndex = players.length > 0 ? Math.max(...players.map(p => p.index)) + 1 : 1;
-    setPlayers([...players, { index: nextIndex, name: newPlayerName.trim(), position: newPlayerPosition }]);
-    setNewPlayerName('');
+    try {
+      const res = await fetch("http://localhost:3000/api/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newPlayerName.trim(),
+          position: newPlayerPosition
+        }),
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPlayers(prev => [...prev, data.player]);
+        setNewPlayerName('');
+      } else {
+        alert(data.message || "Failed to add player");
+      }
+    } catch (err) {
+      console.error("Error adding player:", err);
+      alert("Error adding player to database");
+    }
   };
 
-  const handleRemovePlayer = (index) => {
-    setPlayers(players.filter(p => p.index !== index));
+  const handleRemovePlayer = async (index, playerName) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete player "${playerName}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/players/${index}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPlayers(prev => prev.filter(p => p.index !== index));
+      } else {
+        alert(data.message || "Failed to remove player");
+      }
+    } catch (err) {
+      console.error("Error deleting player:", err);
+      alert("Error removing player from database");
+    }
+  };
+
+  const handleSavePlayerName = async (index) => {
+    if (!editingPlayerName.trim()) return;
+
+    const originalPlayer = players.find(p => p.index === index);
+    if (originalPlayer && originalPlayer.name === editingPlayerName.trim()) {
+      setEditingPlayerIndex(null);
+      return;
+    }
+
+    const confirmUpdate = window.confirm(`Are you sure you want to change player name from "${originalPlayer ? originalPlayer.name : ''}" to "${editingPlayerName.trim()}"?`);
+    if (!confirmUpdate) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/players/${index}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editingPlayerName.trim() }),
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPlayers(prev => prev.map(p => p.index === index ? data.player : p));
+        setEditingPlayerIndex(null);
+      } else {
+        alert(data.message || "Failed to update player name");
+      }
+    } catch (err) {
+      console.error("Error updating player name:", err);
+      alert("Error updating player name in database");
+    }
   };
 
   // ─── Team Handlers ───
-  const handleAddTeam = () => {
+  const handleAddTeam = async () => {
     if (!newTeamName.trim()) return;
-    const nextIndex = teams.length > 0 ? Math.max(...teams.map(t => t.index)) + 1 : 1;
-    setTeams([...teams, { index: nextIndex, 'team-name': newTeamName.trim() }]);
-    setNewTeamName('');
+    try {
+      const res = await fetch("http://localhost:3000/api/teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          "team-name": newTeamName.trim()
+        }),
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTeams(prev => [...prev, data.team]);
+        setNewTeamName('');
+      } else {
+        alert(data.message || "Failed to add team");
+      }
+    } catch (err) {
+      console.error("Error adding team:", err);
+      alert("Error adding team to database");
+    }
   };
 
-  const handleRemoveTeam = (index) => {
-    setTeams(teams.filter(t => t.index !== index));
-    const updated = { ...draftResults };
-    delete updated[index];
-    setDraftResults(updated);
+  const handleRemoveTeam = async (index, teamName) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete team "${teamName}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/teams/${index}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTeams(prev => prev.filter(t => t.index !== index));
+        const updated = { ...draftResults };
+        delete updated[index];
+        setDraftResults(updated);
+      } else {
+        alert(data.message || "Failed to remove team");
+      }
+    } catch (err) {
+      console.error("Error deleting team:", err);
+      alert("Error removing team from database");
+    }
+  };
+
+  const handleSaveTeamName = async (index) => {
+    if (!editingTeamName.trim()) return;
+
+    const originalTeam = teams.find(t => t.index === index);
+    if (originalTeam && originalTeam['team-name'] === editingTeamName.trim()) {
+      setEditingTeamIndex(null);
+      return;
+    }
+
+    const confirmUpdate = window.confirm(`Are you sure you want to change team name from "${originalTeam ? originalTeam['team-name'] : ''}" to "${editingTeamName.trim()}"?`);
+    if (!confirmUpdate) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/teams/${index}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ "team-name": editingTeamName.trim() }),
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTeams(prev => prev.map(t => t.index === index ? data.team : t));
+        setEditingTeamIndex(null);
+      } else {
+        alert(data.message || "Failed to update team name");
+      }
+    } catch (err) {
+      console.error("Error updating team name:", err);
+      alert("Error updating team name in database");
+    }
   };
 
 
@@ -100,6 +234,16 @@ const Admin = () => {
     { id: 'teams', label: 'Teams', icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    )},
+    { id: 'lottery', label: 'Live Lottery', icon: (
+      <svg className="w-4 h-4 text-red-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <circle cx="12" cy="12" r="5" fill="currentColor"/>
+      </svg>
+    )},
+    { id: 'slots', label: 'Slot Manager', icon: (
+      <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
       </svg>
     )},
   ];
@@ -217,7 +361,7 @@ const Admin = () => {
               </div>
             ) : (
               <div className="divide-y divide-white/5">
-                {players.map((player, idx) => (
+                {players.map((player) => (
                   <div key={player.index} className="flex items-center justify-between px-6 py-3.5 hover:bg-white/2 transition-colors group">
                     <div className="flex items-center gap-4">
                       <span className="text-xs font-mono text-slate-600 w-8">#{String(player.index).padStart(2, '0')}</span>
@@ -227,20 +371,66 @@ const Admin = () => {
                         </svg>
                       </div>
                       <div>
-                        <span className="font-semibold text-sm text-slate-200">{player.name}</span>
+                        {editingPlayerIndex === player.index ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={editingPlayerName}
+                              onChange={(e) => setEditingPlayerName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSavePlayerName(player.index);
+                                if (e.key === 'Escape') setEditingPlayerIndex(null);
+                              }}
+                              className="bg-slate-950 border border-indigo-500/50 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleSavePlayerName(player.index)}
+                              className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/20 cursor-pointer text-xs font-bold"
+                              title="Save name"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              onClick={() => setEditingPlayerIndex(null)}
+                              className="w-6 h-6 rounded-lg bg-slate-800 border border-white/5 flex items-center justify-center text-slate-400 hover:bg-slate-700 cursor-pointer text-xs font-bold"
+                              title="Cancel"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="font-semibold text-sm text-slate-200">{player.name}</span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       {posBadge(player.position)}
-                      <button
-                        onClick={() => handleRemovePlayer(player.index)}
-                        className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 hover:bg-rose-500/20 transition-all duration-200 cursor-pointer"
-                        title="Remove player"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                      {editingPlayerIndex !== player.index && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingPlayerIndex(player.index);
+                              setEditingPlayerName(player.name);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 hover:bg-indigo-500/20 transition-all duration-200 cursor-pointer"
+                            title="Edit name"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleRemovePlayer(player.index, player.name)}
+                            className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 hover:bg-rose-500/20 transition-all duration-200 cursor-pointer"
+                            title="Remove player"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -297,19 +487,65 @@ const Admin = () => {
                 <div key={team.index} className="relative group bg-slate-900/30 border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300 overflow-hidden">
                   <div className={`absolute top-0 left-0 w-full h-1 bg-linear-to-r ${teamColors[idx % teamColors.length]} opacity-60`}></div>
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1 mr-2">
                       <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold font-mono">Team {team.index}</span>
-                      <h3 className="text-lg font-bold text-white mt-1">{team['team-name']}</h3>
+                      {editingTeamIndex === team.index ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="text"
+                            value={editingTeamName}
+                            onChange={(e) => setEditingTeamName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveTeamName(team.index);
+                              if (e.key === 'Escape') setEditingTeamIndex(null);
+                            }}
+                            className="w-full bg-slate-950 border border-purple-500/50 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleSaveTeamName(team.index)}
+                            className="shrink-0 w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/20 cursor-pointer text-xs font-bold"
+                            title="Save name"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={() => setEditingTeamIndex(null)}
+                            className="shrink-0 w-6 h-6 rounded-lg bg-slate-800 border border-white/5 flex items-center justify-center text-slate-400 hover:bg-slate-700 cursor-pointer text-xs font-bold"
+                            title="Cancel"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <h3 className="text-lg font-bold text-white mt-1">{team['team-name']}</h3>
+                      )}
                     </div>
-                    <button
-                      onClick={() => handleRemoveTeam(team.index)}
-                      className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 hover:bg-rose-500/20 transition-all duration-200 cursor-pointer"
-                      title="Remove team"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                    {editingTeamIndex !== team.index && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            setEditingTeamIndex(team.index);
+                            setEditingTeamName(team['team-name']);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 hover:bg-indigo-500/20 transition-all duration-200 cursor-pointer"
+                          title="Edit name"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveTeam(team.index, team['team-name'])}
+                          className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 hover:bg-rose-500/20 transition-all duration-200 cursor-pointer"
+                          title="Remove team"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                   </div>
                   {/* Show drafted players if any */}
                   {draftResults[team.index] && draftResults[team.index].length > 0 && (
@@ -335,8 +571,21 @@ const Admin = () => {
       )}
 
 
+      {/* ═══════════════════════════════════════════ */}
+      {/* TAB: LOTTERY                                */}
+      {/* ═══════════════════════════════════════════ */}
+      {activeTab === 'lottery' && (
+        <AdminLottery />
+      )}
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* TAB: SLOTS                                  */}
+      {/* ═══════════════════════════════════════════ */}
+      {activeTab === 'slots' && (
+        <SlotManager />
+      )}
+
       </div>
-      <Lottery />
     </>
   )
 }

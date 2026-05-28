@@ -1,19 +1,70 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom';
 import TeamCard from '../components/TeamCard';
 import SeasonButton from '../components/SeasonButton';
 import PlayerCard from '../components/PlayerCard';
-import playersData from '../assets/team_list.json';
 
 const Tournament = () => {
-  const teams = [
-    { name: 'Team A', color: 'from-blue-500 to-cyan-500 shadow-blue-500/20' },
-    { name: 'Team B', color: 'from-purple-500 to-pink-500 shadow-purple-500/20' },
-    { name: 'Team C', color: 'from-amber-500 to-orange-500 shadow-amber-500/20' },
-    { name: 'Team D', color: 'from-emerald-500 to-teal-500 shadow-emerald-500/20' },
-    { name: 'Team E', color: 'from-rose-500 to-red-500 shadow-rose-500/20' },
-    { name: 'Team F', color: 'from-indigo-500 to-violet-500 shadow-indigo-500/20' }
+  const [players, setPlayers] = useState([]);
+  const [dbTeams, setDbTeams] = useState([]);
+  const [draftResults, setDraftResults] = useState({});
+  const [lotteryStatus, setLotteryStatus] = useState('idle');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [playersRes, teamsRes, lotteryRes] = await Promise.all([
+          fetch("http://localhost:3000/api/players"),
+          fetch("http://localhost:3000/api/teams"),
+          fetch("http://localhost:3000/api/lottery/state", { credentials: "include" }).catch(() => null)
+        ]);
+        
+        const playersData = await playersRes.json();
+        if (playersData.success) {
+          setPlayers(playersData.players);
+        }
+
+        const teamsData = await teamsRes.json();
+        if (teamsData.success) {
+          setDbTeams(teamsData.teams);
+        }
+
+        if (lotteryRes) {
+          const lotteryData = await lotteryRes.json();
+          if (lotteryData.success && lotteryData.state) {
+            setDraftResults(lotteryData.state.draftResults || {});
+            setLotteryStatus(lotteryData.state.status || 'idle');
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const teamColorMap = [
+    'from-blue-500 to-cyan-500 shadow-blue-500/20',
+    'from-purple-500 to-pink-500 shadow-purple-500/20',
+    'from-amber-500 to-orange-500 shadow-amber-500/20',
+    'from-emerald-500 to-teal-500 shadow-emerald-500/20',
+    'from-rose-500 to-red-500 shadow-rose-500/20',
+    'from-indigo-500 to-violet-500 shadow-indigo-500/20'
   ];
+
+  // Build teams array from DB teams + lottery draft results
+  const teams = dbTeams.map((t, idx) => {
+    const roster = draftResults[String(t.index)] || [];
+    return {
+      name: t.teamName || t['team-name'] || `Team ${idx + 1}`,
+      color: teamColorMap[idx % teamColorMap.length],
+      players: roster.length > 0 ? roster.map((p, pIdx) => ({
+        name: p.name,
+        position: p.position || 'FW',
+        isCaptain: pIdx === 0
+      })) : null
+    };
+  });
 
   // Fixtures score state with localStorage persistence
   const [fixtures, setFixtures] = useState(() => {
@@ -91,24 +142,28 @@ const Tournament = () => {
   };
 
   // Find selected player objects
-  const goldenBallPlayer = playersData.find(p => p.index === parseInt(goldenBallId, 10));
-  const goldenBootPlayer = playersData.find(p => p.index === parseInt(goldenBootId, 10));
-  const goldenGlovesPlayer = playersData.find(p => p.index === parseInt(goldenGlovesId, 10));
+  const goldenBallPlayer = players.find(p => p.index === parseInt(goldenBallId, 10));
+  const goldenBootPlayer = players.find(p => p.index === parseInt(goldenBootId, 10));
+  const goldenGlovesPlayer = players.find(p => p.index === parseInt(goldenGlovesId, 10));
 
-  // Calculate standings dynamically
+  // Calculate standings dynamically using real team names
+  const teamBgColors = ['bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-indigo-500'];
+  
   const calculateStandings = () => {
-    const initialStats = {
-      'Team A': { name: 'Team A', group: 'A', color: 'bg-blue-500', played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 },
-      'Team B': { name: 'Team B', group: 'B', color: 'bg-purple-500', played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 },
-      'Team C': { name: 'Team C', group: 'A', color: 'bg-amber-500', played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 },
-      'Team D': { name: 'Team D', group: 'B', color: 'bg-emerald-500', played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 },
-      'Team E': { name: 'Team E', group: 'A', color: 'bg-rose-500', played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 },
-      'Team F': { name: 'Team F', group: 'B', color: 'bg-indigo-500', played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 },
-    };
+    const initialStats = {};
+    teams.forEach((team, idx) => {
+      const group = idx % 2 === 0 ? 'A' : 'B';
+      initialStats[team.name] = {
+        name: team.name,
+        group,
+        color: teamBgColors[idx % teamBgColors.length],
+        played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0
+      };
+    });
 
     fixtures.forEach(match => {
       const { team1, team2, score1, score2 } = match;
-      if (score1 !== '' && score2 !== '' && score1 !== null && score2 !== null) {
+      if (score1 !== '' && score2 !== '' && score1 !== null && score2 !== null && initialStats[team1] && initialStats[team2]) {
         const s1 = parseInt(score1, 10);
         const s2 = parseInt(score2, 10);
 
@@ -573,7 +628,7 @@ const Tournament = () => {
                   className="w-full bg-slate-950 border border-white/10 rounded-xl p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/50"
                 >
                   <option value="">Select Player...</option>
-                  {playersData.map(player => (
+                  {players.map(player => (
                     <option key={player.index} value={player.index}>
                       {player.name} ({player.position})
                     </option>
@@ -606,7 +661,7 @@ const Tournament = () => {
                   className="w-full bg-slate-950 border border-white/10 rounded-xl p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/50"
                 >
                   <option value="">Select Player...</option>
-                  {playersData.map(player => (
+                  {players.map(player => (
                     <option key={player.index} value={player.index}>
                       {player.name} ({player.position})
                     </option>
@@ -639,7 +694,7 @@ const Tournament = () => {
                   className="w-full bg-slate-950 border border-white/10 rounded-xl p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/50"
                 >
                   <option value="">Select Player...</option>
-                  {playersData.map(player => (
+                  {players.map(player => (
                     <option key={player.index} value={player.index}>
                       {player.name} ({player.position})
                     </option>

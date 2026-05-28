@@ -1,13 +1,28 @@
-import React, { useState } from 'react';
-import playersData from '../assets/team_list.json';
+import { useState, useEffect } from 'react';
 import PlayerCard from '../components/PlayerCard';
 
 const Players = () => {
+  const [players, setPlayers] = useState([]);
   const [filter, setFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/players");
+        const data = await response.json();
+        if (data.success) {
+          setPlayers(data.players);
+        }
+      } catch (err) {
+        console.error("Error fetching players:", err);
+      }
+    };
+    fetchPlayers();
+  }, []);
+
   // Filtering Logic
-  const filteredPlayers = playersData.filter((player) => {
+  const filteredPlayers = players.filter((player) => {
     const matchesFilter = filter === 'ALL' || player.position.toUpperCase() === filter;
     const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
@@ -25,7 +40,7 @@ const Players = () => {
           </span>
         </h1>
         <p className="text-slate-400 mt-4 max-w-2xl mx-auto text-lg">
-          Meet the 30 elite players waiting for the live lottery draw. Filter by positions or search names.
+          Meet the {players.length} elite players waiting for the live lottery draw. Filter by positions or search names.
         </p>
       </div>
 
