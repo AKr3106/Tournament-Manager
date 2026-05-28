@@ -20,7 +20,7 @@ const Tournament = () => {
           fetch(`${API_BASE}/teams`),
           fetch(`${API_BASE}/lottery/state`, { credentials: "include" }).catch(() => null)
         ]);
-        
+
         const playersData = await playersRes.json();
         if (playersData.success) {
           setPlayers(playersData.players);
@@ -65,8 +65,8 @@ const Tournament = () => {
   // Filter to only show participating teams (selectedTeams if configured, otherwise default to indices 1 to 6).
   const displayTeams = dbTeams.length > 0
     ? (selectedTeams.length > 0
-        ? [...dbTeams].filter(dt => selectedTeams.some(st => st.index === dt.index)).sort((a, b) => a.index - b.index)
-        : [...dbTeams].filter(dt => dt.index >= 1 && dt.index <= 6).sort((a, b) => a.index - b.index))
+      ? [...dbTeams].filter(dt => selectedTeams.some(st => st.index === dt.index)).sort((a, b) => a.index - b.index)
+      : [...dbTeams].filter(dt => dt.index >= 1 && dt.index <= 6).sort((a, b) => a.index - b.index))
     : (isLotteryCompleted && selectedTeams.length > 0 ? selectedTeams : defaultTeams);
 
   // Build teams array
@@ -120,7 +120,7 @@ const Tournament = () => {
   const [goldenBallId, setGoldenBallId] = useState(() => localStorage.getItem('rkm_s2_goldenBallId') || '');
   const [goldenBootId, setGoldenBootId] = useState(() => localStorage.getItem('rkm_s2_goldenBootId') || '');
   const [goldenGlovesId, setGoldenGlovesId] = useState(() => localStorage.getItem('rkm_s2_goldenGlovesId') || '');
-  
+
   // Toggle editing state
   const [isEditing, setIsEditing] = useState(false);
 
@@ -191,7 +191,7 @@ const Tournament = () => {
 
   // Calculate standings dynamically using real team names
   const teamBgColors = ['bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-indigo-500'];
-  
+
   const calculateStandings = () => {
     const initialStats = {};
     teams.forEach((team, idx) => {
@@ -263,7 +263,7 @@ const Tournament = () => {
       <div className="text-center md:text-left mb-12 relative">
         <div className="absolute -top-10 -left-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute top-20 right-10 w-60 h-60 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        
+
         <span className="text-indigo-400 font-semibold tracking-wider text-sm uppercase">RKM LEGACY LEAGUE Season 2</span>
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mt-2">
           <span className="bg-clip-text text-transparent bg-linear-to-r from-indigo-200 via-purple-300 to-indigo-100 antialiased" style={{ WebkitTextFillColor: 'transparent' }}>
@@ -382,9 +382,9 @@ const Tournament = () => {
       {/* Groups & Fixtures Section */}
       <div className="mb-20 bg-slate-900/20 border border-white/10 rounded-3xl p-6 md:p-8 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
-        
+
         <h3 className="text-2xl md:text-3xl font-bold mb-8 text-center text-white">Groups & Fixtures</h3>
-        
+
         {/* Groups Standings Display */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Group A Standings */}
@@ -397,7 +397,7 @@ const Tournament = () => {
               </div>
               <span className="text-[10px] bg-indigo-500/10 text-indigo-400 font-bold px-2 py-0.5 rounded uppercase tracking-wider">Group 1</span>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
@@ -456,7 +456,7 @@ const Tournament = () => {
               </div>
               <span className="text-[10px] bg-purple-500/10 text-purple-400 font-bold px-2 py-0.5 rounded uppercase tracking-wider">Group 2</span>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
@@ -509,7 +509,7 @@ const Tournament = () => {
         {/* Fixtures Timeline */}
         <div className="bg-slate-900/20 border border-white/10 rounded-3xl p-6 md:p-8 relative overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
-          
+
           <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-3">
             <h4 className="font-bold text-lg text-white">Fixture Schedule</h4>
             <button
@@ -534,13 +534,13 @@ const Tournament = () => {
               )}
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fixtures.map((fixture, index) => {
               const { team1: displayTeam1, team2: displayTeam2 } = getFixtureTeams(index);
               return (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="flex items-center justify-between bg-slate-950/60 border border-white/5 rounded-2xl p-4 hover:border-indigo-500/20 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3">
@@ -551,7 +551,7 @@ const Tournament = () => {
                       Group {fixture.group}
                     </span>
                   </div>
-                  
+
                   {isEditing ? (
                     <div className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-slate-200">
                       <span>{displayTeam1}</span>
@@ -587,7 +587,7 @@ const Tournament = () => {
                       <span>{displayTeam2}</span>
                     </div>
                   )}
-                  
+
                   <span className="text-xs text-slate-500 font-mono hidden sm:inline">({fixture.format})</span>
                 </div>
               );
@@ -600,7 +600,7 @@ const Tournament = () => {
               <h5 className="font-extrabold text-white text-base">Grand Final</h5>
               <p className="text-slate-400 text-xs mt-1">Decided between the top-ranked teams (toppers) of Group A and Group B.</p>
             </div>
-            
+
             {isEditing ? (
               <div className="flex items-center gap-2 font-semibold text-xs text-slate-200">
                 <span className="text-xs font-bold text-amber-400">A Topper</span>
@@ -657,7 +657,7 @@ const Tournament = () => {
         {/* Awards Cards Grid */}
         <div className="lg:col-span-2 flex flex-col justify-center">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            
+
             {/* Golden Ball */}
             <div className="flex flex-col space-y-3">
               <div className="text-xs font-bold text-amber-400 uppercase tracking-wider text-center flex items-center justify-center gap-1.5 bg-amber-500/10 py-1.5 rounded-lg border border-amber-500/20">
@@ -667,7 +667,7 @@ const Tournament = () => {
                 </svg>
                 Golden Ball
               </div>
-              
+
               {isEditing && (
                 <select
                   value={goldenBallId}
@@ -700,7 +700,7 @@ const Tournament = () => {
                 </svg>
                 Golden Boot
               </div>
-              
+
               {isEditing && (
                 <select
                   value={goldenBootId}
@@ -733,7 +733,7 @@ const Tournament = () => {
                 </svg>
                 Golden Gloves
               </div>
-              
+
               {isEditing && (
                 <select
                   value={goldenGlovesId}
