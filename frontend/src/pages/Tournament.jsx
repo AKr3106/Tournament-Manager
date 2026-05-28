@@ -62,9 +62,11 @@ const Tournament = () => {
   ];
 
   // Use dbTeams if available so that the actual team names are always shown.
-  // Otherwise, fallback to selectedTeams or defaultTeams.
+  // Filter to only show participating teams (selectedTeams if configured, otherwise default to indices 1 to 6).
   const displayTeams = dbTeams.length > 0
-    ? [...dbTeams].sort((a, b) => a.index - b.index)
+    ? (selectedTeams.length > 0
+        ? [...dbTeams].filter(dt => selectedTeams.some(st => st.index === dt.index)).sort((a, b) => a.index - b.index)
+        : [...dbTeams].filter(dt => dt.index >= 1 && dt.index <= 6).sort((a, b) => a.index - b.index))
     : (isLotteryCompleted && selectedTeams.length > 0 ? selectedTeams : defaultTeams);
 
   // Build teams array

@@ -141,7 +141,7 @@ const Lottery = () => {
         {lotteryState.status !== "idle" && (() => {
           const teamsToDisplay = (lotteryState.selectedTeams && lotteryState.selectedTeams.length > 0)
             ? lotteryState.selectedTeams
-            : teams;
+            : teams.filter(t => t.index >= 1 && t.index <= 6);
           return (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
@@ -194,7 +194,7 @@ const Lottery = () => {
         {lotteryState.status !== "idle" && (() => {
           const teamsToDisplay = (lotteryState.selectedTeams && lotteryState.selectedTeams.length > 0)
             ? lotteryState.selectedTeams
-            : teams;
+            : teams.filter(t => t.index >= 1 && t.index <= 6);
           return (
             <div>
               <h3 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
