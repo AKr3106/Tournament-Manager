@@ -7,10 +7,14 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const sendTokenResponse = (user, statusCode, res) => {
     const token = user.generateToken();
 
+    const isProduction = process.env.NODE_ENV === "production";
     const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProduction,
+        // 'none' is required in production so the cookie is sent with API calls
+        // on Vercel (even same-site routes go through different serverless contexts).
+        // 'strict' is fine locally since frontend and backend share localhost.
+        sameSite: isProduction ? "none" : "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
 
@@ -129,8 +133,11 @@ export const loginUser = async (req, res) => {
 // @access  Public
 export const logoutUser = async (req, res) => {
     try {
+        const isProduction = process.env.NODE_ENV === "production";
         res.cookie("token", "none", {
             httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "strict",
             expires: new Date(Date.now() + 10 * 1000), // expires in 10 seconds
         });
 
