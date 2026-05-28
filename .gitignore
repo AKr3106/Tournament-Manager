@@ -1,1 +1,7 @@
 backend/.env
+# Ignore all environment files
+**/.env
+**/.env.*
+
+# Ignore all node_modules folders
+**/node_modules/
