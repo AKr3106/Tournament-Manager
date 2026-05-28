@@ -12,9 +12,10 @@ dotenv.config();
 
 const app = express();
 
-// List of allowed origins for your API
+// Allowed absolute origins for your API
 const allowedOrigins = [
-    "http://localhost:5173", // Local frontend development port
+    "http://localhost:5173",                          // Local frontend development port
+    "https://tournament-manager-xi-beige.vercel.app" // Your main production Vercel URL
 ];
 
 app.use(cors({
@@ -22,15 +23,18 @@ app.use(cors({
         // Allow server-to-server requests or requests with no origin (like Postman/Curl)
         if (!origin) return callback(null, true);
         
-        // Dynamically accept your production Vercel URL or any Vercel preview branch deployment
+        // Match explicit domains or check for Vercel preview branch URLs securely
         if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith(".vercel.app")) {
+            // This returns the EXACT matching domain back to the browser, satisfying 'credentials: true'
             return callback(null, true);
         } else {
             const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
             return callback(new Error(msg), false);
         }
     },
-    credentials: true,
+    credentials: true, // Crucial for passing cookies/sessions across serverless boundaries
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 }));
 
 app.use(express.json());

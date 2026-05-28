@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 
-const API_BASE = "http://localhost:3000/api";
+// Dynamically sets the API base based on whether you are running locally or on production
+const API_BASE = import.meta.env.MODE === "development" 
+  ? "http://localhost:3000/api" 
+  : "/api";
 
 const AdminLottery = () => {
   // Database lists
@@ -408,7 +411,7 @@ const AdminLottery = () => {
             </div>
           </div>
 
-          {/* Fixed Selection Order Fix without sorting index */}
+          {/* Team Selection List */}
           <div className="space-y-4 border-t border-white/5 pt-6">
             <h4 className="font-bold text-white text-sm">Select Participating Teams ({selectedTeams.length})</h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto pr-2">
@@ -423,7 +426,7 @@ const AdminLottery = () => {
                         if (exists) {
                           return prev.filter(t => t.index !== team.index);
                         } else {
-                          return [...prev, team]; // Removed explicit .sort() to preserve click ordering sequence
+                          return [...prev, team];
                         }
                       });
                     }}
@@ -438,7 +441,7 @@ const AdminLottery = () => {
             </div>
           </div>
 
-          {/* Players Roster selection components layout */}
+          {/* Players Roster */}
           <div className="space-y-4 border-t border-white/5 pt-6">
             <div className="flex justify-between items-center">
               <h4 className="font-bold text-white text-sm">Select Captains ({selectedPlayers.length})</h4>
