@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import { OAuth2Client } from "google-auth-library";
+import connectDB from "../db/db.js"; // <-- Added database import
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -11,9 +12,6 @@ const sendTokenResponse = (user, statusCode, res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
-        // 'none' is required in production so the cookie is sent with API calls
-        // on Vercel (even same-site routes go through different serverless contexts).
-        // 'strict' is fine locally since frontend and backend share localhost.
         sameSite: isProduction ? "none" : "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
@@ -44,9 +42,10 @@ const sendTokenResponse = (user, statusCode, res) => {
 // @access  Public
 export const registerUser = async (req, res) => {
     try {
+        await connectDB(); // <-- Added to prevent serverless crash
+
         const { name, emailid, password, phonenumber, role, playerName } = req.body;
 
-        // Basic validation
         if (!name || !emailid || !password || !phonenumber) {
             return res.status(400).json({
                 success: false,
@@ -54,7 +53,6 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        // Check if user already exists
         const userExists = await User.findOne({ emailid });
         if (userExists) {
             return res.status(400).json({
@@ -63,7 +61,6 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        // Create new user
         const user = await User.create({
             name,
             emailid,
@@ -89,9 +86,10 @@ export const registerUser = async (req, res) => {
 // @access  Public
 export const loginUser = async (req, res) => {
     try {
+        await connectDB(); // <-- Added to prevent serverless crash
+
         const { emailid, password } = req.body;
 
-        // Validation
         if (!emailid || !password) {
             return res.status(400).json({
                 success: false,
@@ -99,7 +97,6 @@ export const loginUser = async (req, res) => {
             });
         }
 
-        // Check for user
         const user = await User.findOne({ emailid });
         if (!user) {
             return res.status(401).json({
@@ -108,7 +105,6 @@ export const loginUser = async (req, res) => {
             });
         }
 
-        // Verify password
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             return res.status(401).json({
@@ -138,7 +134,7 @@ export const logoutUser = async (req, res) => {
             httpOnly: true,
             secure: isProduction,
             sameSite: isProduction ? "none" : "strict",
-            expires: new Date(Date.now() + 10 * 1000), // expires in 10 seconds
+            expires: new Date(Date.now() + 10 * 1000), 
         });
 
         res.status(200).json({
@@ -159,6 +155,8 @@ export const logoutUser = async (req, res) => {
 // @access  Public
 export const googleLogin = async (req, res) => {
     try {
+        await connectDB(); // <-- Added to prevent serverless crash
+
         const { credential } = req.body;
         if (!credential) {
             return res.status(400).json({
@@ -168,7 +166,6 @@ export const googleLogin = async (req, res) => {
         }
 
         let email, name;
-        // Development fallback / decoding without verification for testing
         if (!process.env.GOOGLE_CLIENT_ID) {
             const jwt = await import("jsonwebtoken");
             const decoded = jwt.default.decode(credential);
@@ -190,17 +187,15 @@ export const googleLogin = async (req, res) => {
             name = payload.name;
         }
 
-        // Find or create user
         let user = await User.findOne({ emailid: email });
         if (!user) {
-            // Generate a random password for OAuth users
             const randomPassword = Math.random().toString(36).slice(-8);
             user = await User.create({
                 name: name,
                 emailid: email,
                 password: randomPassword,
-                phonenumber: "0000000000", // placeholder phone number
-                playerName: "", // initially blank, linked later from profile page
+                phonenumber: "0000000000", 
+                playerName: "", 
                 role: "user"
             });
         }
@@ -221,9 +216,10 @@ export const googleLogin = async (req, res) => {
 // @access  Protected
 export const updateProfile = async (req, res) => {
     try {
+        await connectDB(); // <-- Added to prevent serverless crash
+
         const { playerName, phonenumber, name, myTeam } = req.body;
         
-        // Find user by ID and update fields
         const user = await User.findById(req.user._id);
         if (!user) {
             return res.status(404).json({
