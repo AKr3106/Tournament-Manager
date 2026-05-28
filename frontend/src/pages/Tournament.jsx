@@ -9,6 +9,7 @@ const Tournament = () => {
   const [dbTeams, setDbTeams] = useState([]);
   const [draftResults, setDraftResults] = useState({});
   const [lotteryStatus, setLotteryStatus] = useState('idle');
+  const [selectedTeams, setSelectedTeams] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,6 +35,7 @@ const Tournament = () => {
           if (lotteryData.success && lotteryData.state) {
             setDraftResults(lotteryData.state.draftResults || {});
             setLotteryStatus(lotteryData.state.status || 'idle');
+            setSelectedTeams(lotteryData.state.selectedTeams || []);
           }
         }
       } catch (err) {
@@ -52,9 +54,20 @@ const Tournament = () => {
     'from-indigo-500 to-violet-500 shadow-indigo-500/20'
   ];
 
-  // Build teams array from DB teams + lottery draft results
-  const teams = dbTeams.map((t, idx) => {
-    const roster = draftResults[String(t.index)] || [];
+  const isLotteryCompleted = lotteryStatus === 'complete';
+  const defaultTeams = [
+    { teamName: 'Team A' }, { teamName: 'Team B' }, { teamName: 'Team C' },
+    { teamName: 'Team D' }, { teamName: 'Team E' }, { teamName: 'Team F' }
+  ];
+
+  // If lottery is completed and selectedTeams exists, use them. Otherwise, use placeholders.
+  const displayTeams = isLotteryCompleted && selectedTeams.length > 0
+    ? selectedTeams
+    : defaultTeams;
+
+  // Build teams array
+  const teams = displayTeams.map((t, idx) => {
+    const roster = t.index ? (draftResults[String(t.index)] || []) : [];
     return {
       name: t.teamName || t['team-name'] || `Team ${idx + 1}`,
       color: teamColorMap[idx % teamColorMap.length],
@@ -111,6 +124,25 @@ const Tournament = () => {
   useEffect(() => {
     localStorage.setItem('rkm_s2_fixtures', JSON.stringify(fixtures));
   }, [fixtures]);
+
+  // Sync fixture names with dynamic team names
+  useEffect(() => {
+    if (teams.length >= 6) {
+      setFixtures(prev => prev.map((f, i) => {
+        const mappings = [
+          [0, 2], [1, 3], [2, 4], [3, 5], [4, 0], [5, 1]
+        ];
+        if (mappings[i]) {
+          return {
+            ...f,
+            team1: teams[mappings[i][0]]?.name || f.team1,
+            team2: teams[mappings[i][1]]?.name || f.team2
+          };
+        }
+        return f;
+      }));
+    }
+  }, [teams.map(t => t.name).join(',')]);
 
   useEffect(() => {
     localStorage.setItem('rkm_s2_finalScore', JSON.stringify(finalScore));

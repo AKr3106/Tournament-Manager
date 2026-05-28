@@ -50,6 +50,20 @@
   --color-slate-50: #ffffff !important;
 }
 
+html, body {
+  overflow-y: auto;
+}
+
+/* Hide scrollbars in Firefox */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+/* Hide scrollbars in Chrome, Safari, Edge */
+*::-webkit-scrollbar {
+  display: none;
+}
+
 /* Fix text and input styles in light mode */
 .light input,
 .light select,

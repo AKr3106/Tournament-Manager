@@ -60,7 +60,7 @@ const App = () => {
   const showNavbar = !['/signin', '/create-account'].includes(location.pathname)
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30 relative">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30 relative px-2 sm:px-4 md:px-6 lg:px-8">
       <AnimatedBackground />
       {showNavbar && <Navbar />}
       <div className="grow relative z-10">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const API_BASE = "http://localhost:3000/api";
 
@@ -138,21 +139,26 @@ const Lottery = () => {
         )}
 
         {/* STATS ROW */}
-        {lotteryState.status !== "idle" && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { label: 'Pool Size', value: lotteryState.selectedPlayers.length, color: 'text-indigo-400' },
-              { label: 'Teams', value: teams.length, color: 'text-purple-400' },
-              { label: 'Per Team', value: lotteryState.playersPerTeam, color: 'text-pink-400' },
-              { label: 'Drafted', value: totalDrafted, color: 'text-emerald-400' },
-            ].map((stat, i) => (
-              <div key={i} className="bg-slate-900/30 border border-white/5 rounded-xl p-4 text-center">
-                <span className={`block text-2xl font-extrabold ${stat.color}`}>{stat.value}</span>
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{stat.label}</span>
-              </div>
-            ))}
-          </div>
-        )}
+        {lotteryState.status !== "idle" && (() => {
+          const teamsToDisplay = (lotteryState.selectedTeams && lotteryState.selectedTeams.length > 0)
+            ? lotteryState.selectedTeams
+            : teams;
+          return (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { label: 'Pool Size', value: lotteryState.selectedPlayers.length, color: 'text-indigo-400' },
+                { label: 'Teams', value: teamsToDisplay.length, color: 'text-purple-400' },
+                { label: 'Per Team', value: lotteryState.playersPerTeam, color: 'text-pink-400' },
+                { label: 'Drafted', value: totalDrafted, color: 'text-emerald-400' },
+              ].map((stat, i) => (
+                <div key={i} className="bg-slate-900/30 border border-white/5 rounded-xl p-4 text-center">
+                  <span className={`block text-2xl font-extrabold ${stat.color}`}>{stat.value}</span>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{stat.label}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* CURRENT PICK ANIMATION */}
         {lotteryState.currentPick && lotteryState.status === "running" && (
@@ -168,7 +174,7 @@ const Lottery = () => {
             <div className="mt-2 flex items-center justify-center gap-2">
               <span className="text-slate-400 text-sm">Drafted to →</span>
               <strong className="text-transparent bg-clip-text bg-linear-to-r from-pink-400 to-purple-400 text-base font-extrabold">
-                {lotteryState.currentPick.team["team-name"]}
+                {lotteryState.currentPick.team["team-name"] || lotteryState.currentPick.team.teamName}
               </strong>
             </div>
           </div>
@@ -186,52 +192,57 @@ const Lottery = () => {
         )}
 
         {/* DRAFT RESULTS GRID */}
-        {lotteryState.status !== "idle" && (
-          <div>
-            <h3 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 bg-pink-500 rounded-full animate-ping"></span>
-              Live Team Rosters
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {teams.map((team, idx) => {
-                const roster = getDraftResults(team.index);
-                return (
-                  <div key={team.index} className="bg-slate-900/30 border border-white/10 rounded-2xl overflow-hidden shadow-sm hover:border-white/20 transition-all duration-300">
-                    <div className={`h-1.5 bg-linear-to-r ${teamColors[idx % teamColors.length]} opacity-70`}></div>
-                    <div className="p-5">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-bold text-white text-sm">{team['team-name']}</h4>
-                        <span className="text-[10px] bg-white/5 text-slate-400 px-2 py-0.5 rounded-full font-mono">
-                          {roster.length}/{lotteryState.playersPerTeam}
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        {roster.map((player, pIdx) => (
-                          <div key={player.index} className="flex items-center justify-between bg-slate-950/40 p-2.5 rounded-xl border border-white/5 text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="text-slate-500 font-mono">#{String(player.index).padStart(2, '0')}</span>
-                              <span className={`text-slate-200 ${pIdx === 0 ? 'font-bold' : ''}`}>
-                                {player.name}
-                                {pIdx === 0 && <span className="ml-1 text-amber-400 text-[10px] font-bold">(C)</span>}
-                              </span>
+        {lotteryState.status !== "idle" && (() => {
+          const teamsToDisplay = (lotteryState.selectedTeams && lotteryState.selectedTeams.length > 0)
+            ? lotteryState.selectedTeams
+            : teams;
+          return (
+            <div>
+              <h3 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 bg-pink-500 rounded-full animate-ping"></span>
+                Live Team Rosters
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {teamsToDisplay.map((team, idx) => {
+                  const roster = getDraftResults(team.index);
+                  return (
+                    <div key={team.index} className="bg-slate-900/30 border border-white/10 rounded-2xl overflow-hidden shadow-sm hover:border-white/20 transition-all duration-300">
+                      <div className={`h-1.5 bg-linear-to-r ${teamColors[idx % teamColors.length]} opacity-70`}></div>
+                      <div className="p-5">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="font-bold text-white text-sm">{team.teamName || team['team-name']}</h4>
+                          <span className="text-[10px] bg-white/5 text-slate-400 px-2 py-0.5 rounded-full font-mono">
+                            {roster.length}/{lotteryState.playersPerTeam}
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {roster.map((player, pIdx) => (
+                            <div key={player.index} className="flex items-center justify-between bg-slate-950/40 p-2.5 rounded-xl border border-white/5 text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-500 font-mono">#{String(player.index).padStart(2, '0')}</span>
+                                <span className={`text-slate-200 ${pIdx === 0 ? 'font-bold' : ''}`}>
+                                  {player.name}
+                                  {pIdx === 0 && <span className="ml-1 text-amber-400 text-[10px] font-bold">(C)</span>}
+                                </span>
+                              </div>
+                              {posBadge(player.position)}
                             </div>
-                            {posBadge(player.position)}
-                          </div>
-                        ))}
-                        {/* Empty slots */}
-                        {Array.from({ length: Math.max(0, lotteryState.playersPerTeam - roster.length) }).map((_, i) => (
-                          <div key={`empty-${i}`} className="flex items-center justify-center bg-slate-950/20 p-2.5 rounded-xl border border-dashed border-white/5 text-xs text-slate-700 italic">
-                            Awaiting draw...
-                          </div>
-                        ))}
+                          ))}
+                          {/* Empty slots */}
+                          {Array.from({ length: Math.max(0, lotteryState.playersPerTeam - roster.length) }).map((_, i) => (
+                            <div key={`empty-${i}`} className="flex items-center justify-center bg-slate-950/20 p-2.5 rounded-xl border border-dashed border-white/5 text-xs text-slate-700 italic">
+                              Awaiting draw...
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* DRAFT LOG */}
         {lotteryState.draftLog && lotteryState.draftLog.length > 0 && (

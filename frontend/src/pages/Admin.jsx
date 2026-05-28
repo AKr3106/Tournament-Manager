@@ -11,6 +11,7 @@ const Admin = () => {
   const [newPlayerPosition, setNewPlayerPosition] = useState('FW');
   const [editingPlayerIndex, setEditingPlayerIndex] = useState(null);
   const [editingPlayerName, setEditingPlayerName] = useState('');
+  const [editingPlayerPosition, setEditingPlayerPosition] = useState('FW');
 
   // ─── Team Management State ───
   const [teams, setTeams] = useState([]);
@@ -96,23 +97,23 @@ const Admin = () => {
     }
   };
 
-  const handleSavePlayerName = async (index) => {
+  const handleSavePlayer = async (index) => {
     if (!editingPlayerName.trim()) return;
 
     const originalPlayer = players.find(p => p.index === index);
-    if (originalPlayer && originalPlayer.name === editingPlayerName.trim()) {
+    if (originalPlayer && originalPlayer.name === editingPlayerName.trim() && originalPlayer.position === editingPlayerPosition) {
       setEditingPlayerIndex(null);
       return;
     }
 
-    const confirmUpdate = window.confirm(`Are you sure you want to change player name from "${originalPlayer ? originalPlayer.name : ''}" to "${editingPlayerName.trim()}"?`);
+    const confirmUpdate = window.confirm(`Are you sure you want to update player "${originalPlayer ? originalPlayer.name : ''}"?`);
     if (!confirmUpdate) return;
 
     try {
       const res = await fetch(`http://localhost:3000/api/players/${index}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editingPlayerName.trim() }),
+        body: JSON.stringify({ name: editingPlayerName.trim(), position: editingPlayerPosition }),
         credentials: "include"
       });
       const data = await res.json();
@@ -378,14 +379,23 @@ const Admin = () => {
                               value={editingPlayerName}
                               onChange={(e) => setEditingPlayerName(e.target.value)}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSavePlayerName(player.index);
+                                if (e.key === 'Enter') handleSavePlayer(player.index);
                                 if (e.key === 'Escape') setEditingPlayerIndex(null);
                               }}
                               className="bg-slate-950 border border-indigo-500/50 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                               autoFocus
                             />
+                            <select
+                              value={editingPlayerPosition}
+                              onChange={(e) => setEditingPlayerPosition(e.target.value)}
+                              className="bg-slate-950 border border-indigo-500/50 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/30 cursor-pointer"
+                            >
+                              <option value="FW">FW</option>
+                              <option value="DF">DF</option>
+                              <option value="GK">GK</option>
+                            </select>
                             <button
-                              onClick={() => handleSavePlayerName(player.index)}
+                              onClick={() => handleSavePlayer(player.index)}
                               className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/20 cursor-pointer text-xs font-bold"
                               title="Save name"
                             >
@@ -412,6 +422,7 @@ const Admin = () => {
                             onClick={() => {
                               setEditingPlayerIndex(player.index);
                               setEditingPlayerName(player.name);
+                              setEditingPlayerPosition(player.position || 'FW');
                             }}
                             className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 hover:bg-indigo-500/20 transition-all duration-200 cursor-pointer"
                             title="Edit name"

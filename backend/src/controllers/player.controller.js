@@ -94,7 +94,7 @@ export const deletePlayer = async (req, res) => {
 export const updatePlayer = async (req, res) => {
     try {
         const { index } = req.params;
-        const { name } = req.body;
+        const { name, position } = req.body;
 
         if (!name) {
             return res.status(400).json({
@@ -103,9 +103,14 @@ export const updatePlayer = async (req, res) => {
             });
         }
 
+        const updateData = { name: name.trim() };
+        if (position) {
+            updateData.position = position;
+        }
+
         const player = await Player.findOneAndUpdate(
             { index: Number(index) },
-            { name: name.trim() },
+            updateData,
             { new: true }
         );
 

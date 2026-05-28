@@ -13,6 +13,11 @@ const lotterySchema = new mongoose.Schema(
                 type: mongoose.Schema.Types.Mixed,
             }
         ],
+        selectedTeams: [
+            {
+                type: mongoose.Schema.Types.Mixed,
+            }
+        ],
         playersPerTeam: {
             type: Number,
             default: 0,

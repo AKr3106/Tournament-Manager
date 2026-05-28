@@ -9,6 +9,7 @@ const getOrCreateLottery = async () => {
         state = await Lottery.create({
             status: "idle",
             selectedPlayers: [],
+            selectedTeams: [],
             playersPerTeam: 0,
             draftResults: {},
             draftLog: [],
@@ -44,7 +45,7 @@ export const getLotteryState = async (req, res) => {
 // @access  Protected (Admin only)
 export const setupLottery = async (req, res) => {
     try {
-        const { selectedPlayers, playersPerTeam } = req.body;
+        const { selectedPlayers, playersPerTeam, selectedTeams } = req.body;
 
         if (!selectedPlayers || !Array.isArray(selectedPlayers)) {
             return res.status(400).json({
@@ -61,16 +62,29 @@ export const setupLottery = async (req, res) => {
             });
         }
 
-        // Get teams
-        const teams = await Team.find({}).sort({ index: 1 });
-        if (teams.length < 2) {
+        // Get teams to participate
+        let teamsToUse = [];
+        if (selectedTeams && Array.isArray(selectedTeams) && selectedTeams.length >= 2) {
+            teamsToUse = selectedTeams;
+        } else {
+            // Default to all teams in DB
+            const dbTeams = await Team.find({}).sort({ index: 1 });
+            teamsToUse = dbTeams.map(t => ({
+                index: t.index,
+                teamName: t.teamName,
+                "team-name": t.teamName,
+                _id: t._id
+            }));
+        }
+
+        if (teamsToUse.length < 2) {
             return res.status(400).json({
                 success: false,
                 message: "At least 2 teams are required to run the lottery"
             });
         }
 
-        const numTeams = teams.length;
+        const numTeams = teamsToUse.length;
         if (selectedPlayers.length > 0 && selectedPlayers.length < numTeams) {
             return res.status(400).json({
                 success: false,
@@ -81,6 +95,7 @@ export const setupLottery = async (req, res) => {
         const state = await getOrCreateLottery();
         state.status = "setup";
         state.selectedPlayers = selectedPlayers;
+        state.selectedTeams = teamsToUse;
         state.playersPerTeam = count;
         state.draftLog = [];
         state.currentPick = null;
@@ -88,16 +103,18 @@ export const setupLottery = async (req, res) => {
 
         // Initialize draft results with captains pre-assigned to their teams
         const initialResults = new Map();
-        teams.forEach((t, idx) => {
+        teamsToUse.forEach((t, idx) => {
+            const teamIndexStr = String(t.index);
+            const teamName = t.teamName || t['team-name'] || `Team ${t.index}`;
             if (selectedPlayers.length > 0) {
-                initialResults.set(String(t.index), [selectedPlayers[idx]]);
+                initialResults.set(teamIndexStr, [selectedPlayers[idx]]);
                 state.draftLog.push({
                     player: `${selectedPlayers[idx].name} (Captain)`,
-                    team: t.teamName,
+                    team: teamName,
                     timestamp: new Date()
                 });
             } else {
-                initialResults.set(String(t.index), []);
+                initialResults.set(teamIndexStr, []);
             }
         });
         
@@ -105,6 +122,7 @@ export const setupLottery = async (req, res) => {
 
         // Mark all Mixed/Map fields as modified so Mongoose persists them
         state.markModified("selectedPlayers");
+        state.markModified("selectedTeams");
         state.markModified("draftPool");
         state.markModified("draftResults");
         state.markModified("draftLog");
@@ -244,8 +262,25 @@ export const drawNextPlayer = async (req, res) => {
 
         const player = state.draftPool[0];
 
-        // Fetch teams from DB
-        const teams = await Team.find({}).sort({ index: 1 });
+        // Use selectedTeams from state if present, otherwise fetch from DB
+        let teams = [];
+        if (state.selectedTeams && Array.isArray(state.selectedTeams) && state.selectedTeams.length >= 2) {
+            teams = state.selectedTeams.map(t => ({
+                index: t.index,
+                teamName: t.teamName || t['team-name'] || `Team ${t.index}`,
+                "team-name": t.teamName || t['team-name'] || `Team ${t.index}`,
+                _id: t._id
+            }));
+        } else {
+            const dbTeams = await Team.find({}).sort({ index: 1 });
+            teams = dbTeams.map(t => ({
+                index: t.index,
+                teamName: t.teamName,
+                "team-name": t.teamName,
+                _id: t._id
+            }));
+        }
+
         if (teams.length < 2) {
             return res.status(400).json({
                 success: false,

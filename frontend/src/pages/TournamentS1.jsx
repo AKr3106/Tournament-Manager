@@ -10,19 +10,22 @@ const TournamentS1 = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [playersRes, teamsRes] = await Promise.all([
-          fetch("http://localhost:3000/api/players"),
-          fetch("http://localhost:3000/api/teams")
-        ]);
+        const playersRes = await fetch("http://localhost:3000/api/players");
         const playersData = await playersRes.json();
-        const teamsData = await teamsRes.json();
 
         if (playersData.success) {
           setPlayers(playersData.players);
         }
-        if (teamsData.success) {
-          setTeamNames(teamsData.teams);
-        }
+        
+        // Hardcoded Season 1 teams instead of live DB (which is for Season 2)
+        setTeamNames([
+          { 'team-name': 'Dream Makers' },
+          { 'team-name': 'Goal Digger FC' },
+          { 'team-name': 'Gladiator FC' },
+          { 'team-name': 'Victorious Five' },
+          { 'team-name': 'Pancha Pandav' },
+          { 'team-name': 'Atletico FC' }
+        ]);
       } catch (err) {
         console.error("Error fetching data:", err);
       }
