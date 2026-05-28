@@ -61,10 +61,11 @@ const Tournament = () => {
     { teamName: 'Team D' }, { teamName: 'Team E' }, { teamName: 'Team F' }
   ];
 
-  // If lottery is completed and selectedTeams exists, use them. Otherwise, use placeholders.
-  const displayTeams = isLotteryCompleted && selectedTeams.length > 0
-    ? selectedTeams
-    : defaultTeams;
+  // Use dbTeams if available so that the actual team names are always shown.
+  // Otherwise, fallback to selectedTeams or defaultTeams.
+  const displayTeams = dbTeams.length > 0
+    ? [...dbTeams].sort((a, b) => a.index - b.index)
+    : (isLotteryCompleted && selectedTeams.length > 0 ? selectedTeams : defaultTeams);
 
   // Build teams array
   const teams = displayTeams.map((t, idx) => {
