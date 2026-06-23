@@ -145,7 +145,7 @@ const Lottery = () => {
           return (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { label: 'Pool Size', value: lotteryState.selectedPlayers.length, color: 'text-indigo-400' },
+                { label: 'Pool Size', value: lotteryState.selectedPlayers?.length || 0, color: 'text-indigo-400' },
                 { label: 'Teams', value: teamsToDisplay.length, color: 'text-purple-400' },
                 { label: 'Per Team', value: lotteryState.playersPerTeam, color: 'text-pink-400' },
                 { label: 'Drafted', value: totalDrafted, color: 'text-emerald-400' },
@@ -168,12 +168,12 @@ const Lottery = () => {
               ⚡ LIVE DRAFTING ⚡
             </p>
             <p className="text-3xl font-extrabold text-white tracking-wide">
-              {lotteryState.currentPick.player.name}
+              {lotteryState.currentPick?.player?.name || "Player"}
             </p>
             <div className="mt-2 flex items-center justify-center gap-2">
               <span className="text-slate-400 text-sm">Drafted to →</span>
               <strong className="text-transparent bg-clip-text bg-linear-to-r from-pink-400 to-purple-400 text-base font-extrabold">
-                {lotteryState.currentPick.team["team-name"] || lotteryState.currentPick.team.teamName}
+                {lotteryState.currentPick?.team?.["team-name"] || lotteryState.currentPick?.team?.teamName || "Team"}
               </strong>
             </div>
           </div>
@@ -244,7 +244,7 @@ const Lottery = () => {
         })()}
 
         {/* DRAFT LOG */}
-        {lotteryState.draftLog && lotteryState.draftLog.length > 0 && (
+        {lotteryState.draftLog && lotteryState.draftLog?.length > 0 && (
           <div className="bg-slate-900/20 border border-white/10 rounded-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-white/5">
               <h3 className="font-bold text-white text-sm flex items-center gap-2">

@@ -3,7 +3,7 @@ const Rules = () => {
   const matchRules = [
     {
       id: '01',
-      title: 'Reporting Time (3:00 PM)',
+      title: 'Reporting Time (4:00 PM)',
       english: 'Everyone must arrive at the venue by 3:00 PM sharp. Please do not be late. No extra time or extensions will be provided.',
       icon: (
         <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom';
 import TeamCard from '../components/TeamCard';
 import SeasonButton from '../components/SeasonButton';
 import PlayerCard from '../components/PlayerCard';
@@ -139,7 +140,7 @@ const Tournament = () => {
         const s2 = parseInt(score2, 10);
         if (!isNaN(s1) && !isNaN(s2)) {
           initialStats[team1].played += 1; initialStats[team2].played += 1;
-          initialStats[team1].goalsFor += s1; initialxl: initialStats[team1].goalsAgainst += s2;
+          initialStats[team1].goalsFor += s1; initialStats[team1].goalsAgainst += s2;
           initialStats[team2].goalsFor += s2; initialStats[team2].goalsAgainst += s1;
 
           if (s1 > s2) { initialStats[team1].won += 1; initialStats[team1].points += 3; initialStats[team2].lost += 1; } 
@@ -182,7 +183,61 @@ const Tournament = () => {
 
       <SeasonButton activeSeason="s2" />
 
-      {/* Standings Tables[cite: 1] */}
+      {/* 📊 Stats / Highlight Grid Panel Block[cite: 6] */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+        <div className="relative group overflow-hidden rounded-2xl bg-slate-900/50 border border-white/10 p-8 hover:border-indigo-500/50 transition-all duration-300">
+          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/10 rounded-full group-hover:scale-125 transition-transform duration-500"></div>
+          <div className="text-indigo-400 mb-2">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h3 className="text-3xl font-extrabold text-white">6 Teams</h3>
+          <p className="text-slate-400 mt-2">Competing for the ultimate glory in a round-robin league format.</p>
+        </div>
+
+        <div className="relative group overflow-hidden rounded-2xl bg-slate-900/50 border border-white/10 p-8 hover:border-indigo-500/50 transition-all duration-300">
+          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-purple-500/10 rounded-full group-hover:scale-125 transition-transform duration-500"></div>
+          <div className="text-purple-400 mb-2">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <h3 className="text-3xl font-extrabold text-white">5 Players / Team</h3>
+          <p className="text-slate-400 mt-2">Exactly 5 active players per roster. No subs, pure synergy, high stakes.</p>
+        </div>
+
+        <div className="relative group overflow-hidden rounded-2xl bg-slate-900/50 border border-white/10 p-8 hover:border-indigo-500/50 transition-all duration-300">
+          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-pink-500/10 rounded-full group-hover:scale-125 transition-transform duration-500"></div>
+          <div className="text-pink-400 mb-2">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+            </svg>
+          </div>
+          <h3 className="text-3xl font-extrabold text-white">Lottery Draft</h3>
+          <p className="text-slate-400 mt-2">Rosters are decided entirely via a live, randomized lottery draw for absolute fairness.</p>
+        </div>
+      </div>
+
+      {/* Team Rosters Header & Live Navigation Connector */}
+      <div className="mb-12">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-white/5 pb-3 mb-6">
+          <h4 className="font-bold text-lg text-white">Participating Teams</h4>
+          <Link
+            to="/lottery"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-linear-to-r from-pink-500 via-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 uppercase tracking-wider"
+          >
+            <svg className="w-4 h-4 animate-spin" style={{ animationDuration: '3s' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.774 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Go to Live Lottery Draft
+          </Link>
+        </div>
+        <TeamCard teams={teams} />
+      </div>
+
+      {/* Standings Tables[cite: 6] */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         <div className="rounded-2xl bg-slate-900/30 border border-white/10 p-6 shadow-xl backdrop-blur-md">
           <h4 className="font-extrabold text-xl text-indigo-400 mb-4">GROUP A</h4>
@@ -229,7 +284,7 @@ const Tournament = () => {
         </div>
       </div>
 
-      {/* Fixtures Timeline Section[cite: 1] */}
+      {/* Fixtures Timeline Section[cite: 6] */}
       <div className="bg-slate-900/20 border border-white/10 rounded-3xl p-6 md:p-8 mb-12">
         <h4 className="font-bold text-lg text-white border-b border-white/5 pb-3 mb-6">Fixture Schedule</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -252,12 +307,11 @@ const Tournament = () => {
           })}
         </div>
 
-        {/* Dynamic Grand Final Card Container matching image_33f84f.png requirements */}
+        {/* Grand Final Card Container[cite: 6] */}
         <div className="mt-8 bg-linear-to-r from-indigo-950 to-purple-950 border border-purple-500/30 rounded-2xl p-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
               <h5 className="font-extrabold text-white text-base">Grand Final Match</h5>
-              
             </div>
             
             {!isGroupStageComplete ? (
@@ -279,7 +333,7 @@ const Tournament = () => {
             )}
           </div>
 
-          {/* Render Stats info for Grand Final if complete */}
+          {/* Render Stats info for Grand Final if complete[cite: 6] */}
           {isGroupStageComplete && (finalMatch.score1 !== '' || finalMatch.scorers?.length > 0) && (
             <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-400">
               <div>
