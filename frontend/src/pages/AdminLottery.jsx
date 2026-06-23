@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-
 import API_BASE from '../api';
 
 const AdminLottery = () => {
+  // Local Season State Configured Specifically for this sub-panel
+  const [selectedSeason, setSelectedSeason] = useState('s2');
+
   // Database lists
   const [allPlayers, setAllPlayers] = useState([]);
   const [allTeams, setAllTeams] = useState([]);
@@ -28,9 +30,18 @@ const AdminLottery = () => {
   const [filterPosition, setFilterPosition] = useState("ALL");
   const [selectedSlotToLoad, setSelectedSlotToLoad] = useState("");
 
-  // Fetch initial data
+  // Fetch initial data (Re-runs safely if modular seasons expand)
   useEffect(() => {
     const fetchData = async () => {
+      // If user tries to load s1, block standard API sync metrics 
+      if (selectedSeason === 's1') {
+        setAllPlayers([]);
+        setAllTeams([]);
+        setSlots([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const playersRes = await fetch(`${API_BASE}/players`, { credentials: "include" });
@@ -73,12 +84,12 @@ const AdminLottery = () => {
     };
 
     fetchData();
-  }, []);
+  }, [selectedSeason]);
 
   // Poll state if lottery is running
   useEffect(() => {
     let intervalId;
-    if (lotteryState.status === "running") {
+    if (lotteryState.status === "running" && selectedSeason === 's2') {
       intervalId = setInterval(async () => {
         try {
           const res = await fetch(`${API_BASE}/lottery/state`, { credentials: "include" });
@@ -99,7 +110,7 @@ const AdminLottery = () => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [lotteryState.status]);
+  }, [lotteryState.status, selectedSeason]);
 
   // Handlers
   const handleTogglePlayer = (player) => {
@@ -127,9 +138,8 @@ const AdminLottery = () => {
   };
 
   const handleDeselectAll = () => {
-    const filtered = filteredPlayersToSelect;
     setSelectedPlayers(prev => {
-      return prev.filter(p => !filtered.some(f => f.index === p.index));
+      return prev.filter(p => !filteredPlayersToSelect.some(f => f.index === p.index));
     });
   };
 
@@ -150,7 +160,8 @@ const AdminLottery = () => {
         body: JSON.stringify({
           selectedPlayers: selectedPlayers,
           selectedTeams: selectedTeams,
-          playersPerTeam: playersPerTeamInput
+          playersPerTeam: playersPerTeamInput,
+          season: selectedSeason
         }),
         credentials: "include"
       });
@@ -275,12 +286,6 @@ const AdminLottery = () => {
     );
   };
 
-  const teamColors = [
-    'from-blue-500 to-cyan-500', 'from-purple-500 to-pink-500', 'from-amber-500 to-orange-500',
-    'from-emerald-500 to-teal-500', 'from-rose-500 to-red-500', 'from-indigo-500 to-violet-500',
-    'from-sky-500 to-blue-500', 'from-lime-500 to-green-500'
-  ];
-
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -295,11 +300,31 @@ const AdminLottery = () => {
     return lotteryState.draftResults[String(teamIndex)] || [];
   };
 
-  const totalDrafted = Object.values(lotteryState.draftResults || {}).reduce((sum, arr) => sum + (arr ? arr.length : 0), 0);
   const pendingSlots = slots.filter(s => s.status !== "completed");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      
+      {/* Local Switcher Block: Standardized Placement inside this view */}
+      <div className="flex bg-slate-950/60 p-1 rounded-xl border border-white/5 max-w-xs mb-2">
+        <button 
+          type="button" 
+          disabled 
+          className="flex-1 py-1.5 text-[11px] font-bold text-slate-600 bg-slate-900/20 border border-dashed border-white/5 rounded-lg cursor-not-allowed"
+        >
+          🔒 Season 1
+        </button>
+        <button 
+          type="button" 
+          onClick={() => setSelectedSeason('s2')} 
+          className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition ${
+            selectedSeason === 's2' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400'
+          }`}
+        >
+          Season 2 (Live)
+        </button>
+      </div>
+
       <div className="bg-slate-900/30 border border-white/10 rounded-2xl p-6 md:p-8 relative overflow-hidden">
         <div className="absolute -right-10 -top-10 w-40 h-40 bg-pink-500/5 rounded-full blur-3xl pointer-events-none"></div>
         
@@ -311,7 +336,7 @@ const AdminLottery = () => {
               </span>
             </div>
             <h2 className="text-xl font-bold text-white mt-3 flex items-center gap-2">
-              Tournament Lottery Management
+              Tournament Lottery Management ({selectedSeason.toUpperCase()})
             </h2>
           </div>
 
@@ -375,7 +400,7 @@ const AdminLottery = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-950/40 border border-white/5 rounded-xl p-5 space-y-3">
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <label className="block text-xs font-semibold text-slate-400 tracking-wider uppercase">
                 Max Players Per Team
               </label>
               <input
@@ -389,7 +414,7 @@ const AdminLottery = () => {
             </div>
 
             <div className="bg-slate-950/40 border border-white/5 rounded-xl p-5 space-y-2">
-              <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Summary</span>
+              <span className="block text-xs font-semibold text-slate-400 tracking-wider uppercase">Summary</span>
               <div className="mt-3 space-y-1 text-sm text-slate-300 font-mono">
                 <div>Teams available: <strong className="text-indigo-400">{allTeams.length}</strong></div>
                 <div>Participating Teams: <strong className="text-blue-400">{selectedTeams.length}</strong></div>
@@ -440,18 +465,22 @@ const AdminLottery = () => {
 
           {/* Players Roster */}
           <div className="space-y-4 border-t border-white/5 pt-6">
-            <div className="flex justify-between items-center">
-              <h4 className="font-bold text-white text-sm">Select Captains ({selectedPlayers.length})</h4>
-              <input
-                type="text"
-                placeholder="Search..."
-                value={playerSearchQuery}
-                onChange={(e) => setPlayerSearchQuery(e.target.value)}
-                className="bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none"
-              />
+            <div className="flex justify-between items-center gap-4">
+              <h4 className="font-bold text-white text-sm whitespace-nowrap">Select Captains ({selectedPlayers.length})</h4>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={handleSelectAll} className="text-[10px] bg-white/5 text-slate-300 font-bold px-2 py-1 rounded border border-white/10 hover:bg-white/10 cursor-pointer">All</button>
+                <button type="button" onClick={handleDeselectAll} className="text-[10px] bg-white/5 text-slate-300 font-bold px-2 py-1 rounded border border-white/10 hover:bg-white/10 cursor-pointer">None</button>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={playerSearchQuery}
+                  onChange={(e) => setPlayerSearchQuery(e.target.value)}
+                  className="bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none"
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto pr-1">
               {filteredPlayersToSelect.map((player) => {
                 const selectedIndex = selectedPlayers.findIndex(p => p.index === player.index);
                 const isSelected = selectedIndex !== -1;
@@ -481,7 +510,7 @@ const AdminLottery = () => {
       {/* RENDER DRAFT LOGS AND RESULTS */}
       {lotteryState.status !== "idle" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {selectedTeams.map((team, idx) => {
+          {selectedTeams.map((team) => {
             const roster = getDraftResults(team.index);
             return (
               <div key={team.index} className="bg-slate-900/30 border border-white/10 rounded-2xl p-5">

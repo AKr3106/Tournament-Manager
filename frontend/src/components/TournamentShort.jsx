@@ -14,7 +14,7 @@ const TournamentShort = () => {
               Quick Overview
             </span>
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
-              6 Teams. 5 Players. 1 Champion.
+              6 Teams. 30 Players. 1 Champion.
             </h2>
             <p className="text-slate-400 text-base md:text-lg leading-relaxed">
               Experience the excitement of the RKM Legacy League. Featuring a completely randomized **Lottery Draft System** to ensure balanced teams, fair play, and pure team chemistry. 30 players will be drawn live into 6 rosters to battle it out for ultimate glory.
@@ -57,4 +57,4 @@ const TournamentShort = () => {
   )
 }
 
-export default TournamentShort
+export default TournamentShort

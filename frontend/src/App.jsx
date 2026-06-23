@@ -14,10 +14,10 @@ import RulesPreview from './components/RulesPreview'
 import Rules from './pages/Rules'
 import Footer from './pages/Footer'
 import Error from './pages/Error'
-import AnimatedBackground from './components/AnimatedBackground'
 import Admin from './pages/Admin'
 import Lottery from './pages/Lottery'
 import Profile from './pages/Profile'
+import Leaderboard from './pages/Leaderboard'
 
 const HomeDivider = () => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,7 +61,6 @@ const App = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30 relative px-2 sm:px-4 md:px-6 lg:px-8">
-      <AnimatedBackground />
       {showNavbar && <Navbar />}
       <div className="grow relative z-10">
         <Routes>
@@ -88,6 +87,7 @@ const App = () => {
           <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
           <Route path="/lottery" element={<ProtectedRoute><Lottery /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="*" element={<Error />} />
         </Routes>
       </div>

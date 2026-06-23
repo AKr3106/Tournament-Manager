@@ -83,7 +83,7 @@ const Navbar = () => {
                         <Link to="/" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Home</Link>
                         <Link to="/about" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">About</Link>
                         <Link to="/tournament" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Tournament</Link>
-                        <Link to="/players" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Players</Link>
+                        <Link to="/leaderboard" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Leaderboard</Link>
                         <Link to="/rules" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Rules</Link>
                         {user && user.role === 'admin' && (
                             <Link to="/admin" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Admin</Link>
@@ -156,12 +156,12 @@ const Navbar = () => {
                         <Link to="/" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Home</Link>
                         <Link to="/about" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">About</Link>
                         <Link to="/tournament" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Tournament</Link>
-                        <Link to="/players" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Players</Link>
+                        <Link to="/leaderboard" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Leaderboard</Link>
                         <Link to="/rules" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Rules</Link>
                         {user && user.role === 'admin' && (
                             <Link to="/admin" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Admin</Link>
                         )}
-                    
+
                         {/* Mobile Theme Toggle */}
                         <button onClick={() => { toggleTheme(); setIsOpen(false); }} className="w-full flex items-center justify-between px-3 py-2.5 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
                             <span>Theme: {theme === 'dark' ? 'Dark/Night' : 'Light/Day'}</span>
