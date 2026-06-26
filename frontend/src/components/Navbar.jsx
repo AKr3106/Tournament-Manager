@@ -65,21 +65,22 @@ const Navbar = () => {
     return (
         <nav className="fixed w-full z-50 top-0 transition-all duration-300 bg-slate-950/50 backdrop-blur-md border-b border-white/10 shadow-lg h-14 md:h-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-14 md:h-20">
+                <div className="flex justify-between items-center h-14 md:h-20 w-full">
+                    
                     {/* Logo */}
-                    <div className="shrink-0 flex items-center gap-2 md:gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+                    <div className="-ml-2 lg:-ml-6 shrink-0 flex items-center gap-2 md:gap-3 cursor-pointer group" onClick={() => navigate('/')}>
                         <img
                             src={logo}
                             alt="RKM Legacy League Logo"
-                            className="w-10 h-10 md:w-20 md:h-20 object-contain drop-shadow-lg group-hover:drop-shadow-[0_0_8px_rgba(99,102,241,0.6)] transition-all duration-200 transform group-hover:scale-105"
+                            className="w-10 h-10 md:w-20 md:h-20 object-contain group-hover:drop-shadow-[0_0_8px_rgba(99,102,241,0.6)] transition-all duration-200 transform group-hover:scale-105"
                         />
-                        <span className="font-bold text-lg sm:text-2xl bg-clip-text text-transparent bg-linear-to-r from-indigo-400 to-purple-500 tracking-wide whitespace-nowrap antialiased" style={{ WebkitTextFillColor: 'transparent' }}>
+                        <span className="font-bold text-base sm:text-2xl bg-clip-text text-transparent bg-linear-to-r from-indigo-400 to-purple-500 tracking-wide whitespace-nowrap antialiased" style={{ WebkitTextFillColor: 'transparent' }}>
                             RKM Legacy League
                         </span>
                     </div>
 
                     {/* Desktop Menu */}
-                    <div className="hidden md:flex items-center space-x-8">
+                    <div className="hidden lg:flex items-center space-x-4 xl:space-x-8">
                         <Link to="/" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Home</Link>
                         <Link to="/about" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">About</Link>
                         <Link to="/tournament" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Tournament</Link>
@@ -88,7 +89,8 @@ const Navbar = () => {
                         {user && user.role === 'admin' && (
                             <Link to="/admin" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Admin</Link>
                         )}
-                        {/* Theme Toggle */}
+                        
+                        {/* Theme Toggle (Desktop Only) */}
                         <button
                             onClick={toggleTheme}
                             className="p-2 rounded-full border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-300 text-slate-300 hover:text-white cursor-pointer mr-2"
@@ -131,11 +133,45 @@ const Navbar = () => {
                         )}
                     </div>
 
-                    {/* Mobile menu button */}
-                    <div className="md:hidden flex items-center">
+                    {/* 📱 Mobile and Tablet Actions Bar Controls */}
+                    <div className="lg:hidden flex items-center gap-3">
+                        
+                        {/* Mobile Responsive Theme Toggle */}
+                        <button
+                            onClick={toggleTheme}
+                            className="p-2 rounded-xl border border-white/10 bg-slate-900/30 text-slate-300 active:scale-95 transition-all cursor-pointer"
+                            aria-label="Toggle mobile theme"
+                        >
+                            {theme === 'dark' ? (
+                                <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 12.728A9 9 0 115.636 5.636a9 9 0 0112.728 12.728z" />
+                                </svg>
+                            ) : (
+                                <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                </svg>
+                            )}
+                        </button>
+
+                        {/* Mobile Profile Icon Shortcut */}
+                        <Link
+                            to={user ? "/profile" : "/signin"}
+                            className={`p-2 rounded-xl border transition-all ${
+                                user 
+                                    ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' 
+                                    : 'bg-slate-900/30 border-white/10 text-slate-400'
+                            }`}
+                            aria-label="Go to profile"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </Link>
+
+                        {/* Mobile menu drawer toggle button */}
                         <button
                             onClick={() => setIsOpen(!isOpen)}
-                            className="text-slate-300 hover:text-white focus:outline-none transition-colors"
+                            className="p-1.5 text-slate-300 hover:text-white focus:outline-none transition-colors"
                         >
                             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 {isOpen ? (
@@ -149,9 +185,9 @@ const Navbar = () => {
                 </div>
             </div>
 
-            {/* Mobile Menu */}
+            {/* Mobile Menu Expanded Drawer */}
             {isOpen && (
-                <div className="md:hidden bg-slate-900/95 backdrop-blur-xl border-b border-white/10 transition-all duration-200">
+                <div className="lg:hidden bg-slate-900/95 backdrop-blur-xl border-b border-white/10 transition-all duration-200">
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                         <Link to="/" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Home</Link>
                         <Link to="/about" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">About</Link>
@@ -162,19 +198,6 @@ const Navbar = () => {
                             <Link to="/admin" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Admin</Link>
                         )}
 
-                        {/* Mobile Theme Toggle */}
-                        <button onClick={() => { toggleTheme(); setIsOpen(false); }} className="w-full flex items-center justify-between px-3 py-2.5 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
-                            <span>Theme: {theme === 'dark' ? 'Dark/Night' : 'Light/Day'}</span>
-                            {theme === 'dark' ? (
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 12.728A9 9 0 115.636 5.636a9 9 0 0112.728 12.728z" />
-                                </svg>
-                            ) : (
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                                </svg>
-                            )}
-                        </button>
                         {user ? (
                             <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
                                 <Link to="/profile" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-semibold text-indigo-400 hover:text-white hover:bg-white/5 transition-colors">Hello, {user.name} (View Profile)</Link>

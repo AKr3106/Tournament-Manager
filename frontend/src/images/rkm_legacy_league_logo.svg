@@ -1,4 +1,4 @@
-<svg width="100%" viewBox="140 40 410 278" role="img" xmlns="http://www.w3.org/2000/svg" style="">
+<svg width="100%" viewBox="160 40 360 278" role="img" xmlns="http://www.w3.org/2000/svg" style="">
   <title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">RKM Legacy League Logo</title>
   <desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Dark gaming logo for RKM Legacy League featuring a hexagonal emblem with stylized R, purple and blue gradient text, and a crown motif</desc>
 
@@ -17,7 +17,7 @@
     </linearGradient>
   <mask id="imagine-text-gaps-qe76o1" maskUnits="userSpaceOnUse"><rect x="140" y="40" width="410" height="278" fill="white"/><rect x="312.28125" y="84.20000457763672" width="60" height="74.4000015258789" fill="black" rx="2"/><rect x="288.6750183105469" y="177.1999969482422" width="102.6500015258789" height="46.400001525878906" fill="black" rx="2"/><rect x="215.91250610351562" y="223.60000610351562" width="248.1750030517578" height="32.80000114440918" fill="black" rx="2"/><rect x="222.0749969482422" y="266.3999938964844" width="235.85000610351562" height="16" fill="black" rx="2"/></mask></defs>
 
-  <rect x="140" y="40" width="400" height="268" fill="#0D0E1A" rx="16" style="fill:rgb(13, 14, 26);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <rect x="140" y="40" width="400" height="268" fill="transparent" rx="16" />
 
   <ellipse cx="340" cy="155" rx="110" ry="95" fill="url(#glowGrad)" style="stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
 

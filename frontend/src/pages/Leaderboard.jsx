@@ -97,7 +97,7 @@ const StatTable = ({ title, emoji, data, accentColor, players, showFull }) => {
             return (
               <div
                 key={row.index}
-                className={`flex items-center gap-4 px-6 py-3.5 transition-colors hover:bg-white/[0.02] ${rank === 1 ? 'bg-amber-500/5' : ''}`}
+                className={`flex items-center gap-4 px-6 py-3.5 transition-colors hover:bg-white/2 ${rank === 1 ? 'bg-amber-500/5' : ''}`}
               >
                 <div className="w-8 text-center shrink-0">
                   <RankBadge rank={rank} />

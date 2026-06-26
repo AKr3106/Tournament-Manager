@@ -260,7 +260,9 @@ export const drawNextPlayer = async (req, res) => {
             return res.status(200).json({ success: true, state });
         }
 
-        const player = state.draftPool[0];
+        const randomIndex = Math.floor(Math.random() * state.draftPool.length);
+        const player = state.draftPool[randomIndex];
+
 
         // Use selectedTeams from state if present, otherwise fetch from DB
         let teams = [];
@@ -311,8 +313,11 @@ export const drawNextPlayer = async (req, res) => {
 
         const targetTeam = teamOrder[0];
 
-        // Remove the drawn player from the pool (reassign whole array so Mongoose sees the change)
-        state.draftPool = state.draftPool.slice(1);
+        // Remove the drawn player from the pool at the random position
+        const newPool = [...state.draftPool];
+        newPool.splice(randomIndex, 1);
+        state.draftPool = newPool;
+
 
         // Add player to the target team's roster
         const currentRoster = state.draftResults.get(String(targetTeam.index)) || [];

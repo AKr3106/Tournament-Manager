@@ -16,9 +16,15 @@ const Profile = () => {
     }
     return null;
   });
+  
   const [players, setPlayers] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [lotteryState, setLotteryState] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // ─── UI Dropdown Toggle States ───
+  const [showSeason1Roster, setShowSeason1Roster] = useState(false);
+  const [showSeason2Roster, setShowSeason2Roster] = useState(false);
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -58,18 +64,7 @@ const Profile = () => {
     }
     return '';
   });
-  const [editMyTeam, setEditMyTeam] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        return parsed.myTeam || '';
-      } catch {
-        return '';
-      }
-    }
-    return '';
-  });
+
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -80,18 +75,24 @@ const Profile = () => {
 
     const fetchData = async () => {
       try {
-        const [playersRes, teamsRes] = await Promise.all([
+        setLoading(true);
+        const [playersRes, teamsRes, lotteryRes] = await Promise.all([
           fetch(`${API_BASE}/players`),
-          fetch(`${API_BASE}/teams`)
+          fetch(`${API_BASE}/teams`),
+          fetch(`${API_BASE}/lottery/state`, { credentials: "include" }).catch(() => null)
         ]);
+        
         const playersData = await playersRes.json();
         const teamsData = await teamsRes.json();
 
-        if (playersData.success) {
-          setPlayers(playersData.players);
-        }
-        if (teamsData.success) {
-          setTeams(teamsData.teams);
+        if (playersData.success) setPlayers(playersData.players);
+        if (teamsData.success) setTeams(teamsData.teams);
+        
+        if (lotteryRes) {
+          const lotteryData = await lotteryRes.json();
+          if (lotteryData.success && lotteryData.state) {
+            setLotteryState(lotteryData.state);
+          }
         }
       } catch (err) {
         console.error("Error fetching profile details:", err);
@@ -112,8 +113,7 @@ const Profile = () => {
         body: JSON.stringify({
           name: editName.trim(),
           phonenumber: editPhone.trim(),
-          playerName: editPlayerName.trim(),
-          myTeam: editMyTeam.trim()
+          playerName: editPlayerName.trim()
         }),
         credentials: "include"
       });
@@ -148,13 +148,14 @@ const Profile = () => {
     );
   }
 
-  // Find player matching current user's playerName
   const pName = currentUser?.playerName || '';
   const matchedPlayer = players.find(p => p.name.toLowerCase().trim() === pName.toLowerCase().trim());
 
-  // Determine Season 1 team (calculated by static chunk slices of 5 players per team)
+  // ─── Season 1 Setup logic ───
   let season1Team = null;
+  let season1RosterPlayers = [];
   let isSeason1Captain = false;
+
   if (matchedPlayer) {
     const sortedPlayers = [...players].sort((a, b) => a.index - b.index);
     const playerIdx = sortedPlayers.findIndex(p => p.index === matchedPlayer.index);
@@ -162,39 +163,51 @@ const Profile = () => {
       const teamIdx = Math.floor(playerIdx / 5);
       if (teamIdx >= 0 && teamIdx < teams.length) {
         season1Team = teams[teamIdx]['team-name'];
+        // Grab the 5 chunked players belonging to this group
+        const startChunk = teamIdx * 5;
+        season1RosterPlayers = sortedPlayers.slice(startChunk, startChunk + 5);
       }
       isSeason1Captain = [1, 6, 11, 16, 21, 26].includes(matchedPlayer.index);
     }
   }
 
-  // Determine Season 2 team (retrieved from localStorage 'rkm_admin_draft')
+  // ─── Season 2 Setup logic ───
   let season2Team = null;
+  let season2RosterPlayers = [];
   let isSeason2Captain = false;
-  if (matchedPlayer && teams.length > 0) {
-    const savedDraft = localStorage.getItem('rkm_admin_draft');
-    if (savedDraft) {
-      try {
-        const draftResults = JSON.parse(savedDraft);
-        const teamIdx = Object.keys(draftResults).find(tIdx => {
-          const teamPlayers = draftResults[tIdx] || [];
-          return teamPlayers.some(p => p.index === matchedPlayer.index);
-        });
-        if (teamIdx) {
-          const teamObj = teams.find(t => String(t.index) === String(teamIdx));
-          if (teamObj) {
-            season2Team = teamObj['team-name'];
-            // First player drafted to a team is typically the captain
-            const teamPlayers = draftResults[teamIdx] || [];
-            if (teamPlayers.length > 0 && teamPlayers[0].index === matchedPlayer.index) {
-              isSeason2Captain = true;
-            }
-          }
+
+  if (matchedPlayer && teams.length > 0 && lotteryState?.draftResults) {
+    const draftResults = lotteryState.draftResults;
+    const teamIdxKey = Object.keys(draftResults).find(tIdx => {
+      const teamPlayers = draftResults[tIdx] || [];
+      return teamPlayers.some(p => p.index === matchedPlayer.index);
+    });
+    
+    if (teamIdxKey) {
+      const teamObj = teams.find(t => String(t.index) === String(teamIdxKey));
+      if (teamObj) {
+        season2Team = teamObj.teamName || teamObj['team-name'];
+        season2RosterPlayers = draftResults[teamIdxKey] || [];
+        
+        if (season2RosterPlayers.length > 0 && season2RosterPlayers[0].index === matchedPlayer.index) {
+          isSeason2Captain = true;
         }
-      } catch (e) {
-        console.error("Error parsing Season 2 draft results:", e);
       }
     }
   }
+
+  const posBadge = (pos) => {
+    const styles = {
+      FW: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+      DF: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      GK: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    };
+    return (
+      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${styles[pos] || 'bg-slate-500/10 text-slate-400 border-slate-500/20'}`}>
+        {pos}
+      </span>
+    );
+  };
 
   return (
     <div className="min-h-screen text-slate-50 pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
@@ -210,7 +223,7 @@ const Profile = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-        {/* Left Side: Account Info */}
+        {/* Left Side: Account Info Card */}
         <div className="md:col-span-1 bg-slate-900/40 border border-white/10 rounded-3xl p-6 shadow-xl backdrop-blur-md space-y-6 relative overflow-hidden">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl"></div>
           
@@ -236,10 +249,7 @@ const Profile = () => {
                 <span className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Player Name Link</span>
                 <span className="text-sm text-indigo-400 font-semibold">{currentUser?.playerName || 'None Linked'}</span>
               </div>
-              <div>
-                <span className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">My Team</span>
-                <span className="text-sm text-indigo-400 font-semibold">{currentUser?.myTeam || 'Not Selected'}</span>
-              </div>
+
               <button
                 onClick={() => setIsEditing(true)}
                 className="w-full mt-2 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500 hover:text-white font-semibold text-xs transition-all duration-300 cursor-pointer text-center"
@@ -251,95 +261,38 @@ const Profile = () => {
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div>
                 <label className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Email (Fixed)</label>
-                <input
-                  type="text"
-                  disabled
-                  value={currentUser?.emailid}
-                  className="w-full bg-slate-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs text-slate-500 cursor-not-allowed"
-                />
+                <input type="text" disabled value={currentUser?.emailid} className="w-full bg-slate-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs text-slate-500 cursor-not-allowed" />
               </div>
               <div>
                 <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Username</label>
-                <input
-                  type="text"
-                  required
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/10 focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
-                  placeholder="Enter Username"
-                />
+                <input type="text" required value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-slate-950 border border-white/10 focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none" placeholder="Enter Username" />
               </div>
               <div>
                 <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Mobile Number</label>
-                <input
-                  type="text"
-                  required
-                  value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/10 focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
-                  placeholder="10-digit number"
-                />
+                <input type="text" required value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="w-full bg-slate-950 border border-white/10 focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none" placeholder="10-digit number" />
               </div>
               <div>
                 <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Player Name Link</label>
                 <input
-                  type="text"
-                  required
-                  value={editPlayerName}
-                  onChange={(e) => setEditPlayerName(e.target.value)}
-                  disabled={!!currentUser?.playerName}
-                  className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 ${
-                    currentUser?.playerName
-                      ? 'bg-slate-950/40 border-white/5 text-slate-500 cursor-not-allowed'
-                      : 'bg-slate-950 border-white/10 focus:border-indigo-500/50 text-slate-200 focus:ring-indigo-500/30'
-                  }`}
+                  type="text" required value={editPlayerName} onChange={(e) => setEditPlayerName(e.target.value)} disabled={!!currentUser?.playerName}
+                  className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none ${currentUser?.playerName ? 'bg-slate-950/40 border-white/5 text-slate-500 cursor-not-allowed' : 'bg-slate-950 border border-white/10 focus:border-indigo-500/50 text-slate-200'}`}
                   placeholder="Enter Real Name"
                 />
               </div>
-              <div>
-                <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">My Team</label>
-                <select
-                  value={editMyTeam}
-                  onChange={(e) => setEditMyTeam(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/10 focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
-                >
-                  <option value="">Select a team (optional)</option>
-                  {teams.map(t => (
-                    <option key={t.index} value={t['team-name']}>{t['team-name']}</option>
-                  ))}
-                </select>
-              </div>
+
               <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  disabled={updating}
-                  className="flex-1 py-2 rounded-xl bg-linear-to-r from-indigo-500 to-purple-600 text-white font-semibold text-xs hover:shadow-md cursor-pointer disabled:opacity-50"
-                >
-                  {updating ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setEditName(currentUser.name || '');
-                    setEditPlayerName(currentUser.playerName || '');
-                    setEditPhone(currentUser.phonenumber || '');
-                    setEditMyTeam(currentUser.myTeam || '');
-                  }}
-                  className="flex-1 py-2 rounded-xl bg-slate-950 border border-white/10 text-slate-400 hover:text-white font-semibold text-xs cursor-pointer"
-                >
-                  Cancel
-                </button>
+                <button type="submit" disabled={updating} className="flex-1 py-2 rounded-xl bg-linear-to-r from-indigo-500 to-purple-600 text-white font-semibold text-xs hover:shadow-md cursor-pointer disabled:opacity-50">{updating ? 'Saving...' : 'Save'}</button>
+                <button type="button" onClick={() => { setIsEditing(false); setEditName(currentUser.name || ''); setEditPlayerName(currentUser.playerName || ''); setEditPhone(currentUser.phonenumber || ''); }} className="flex-1 py-2 rounded-xl bg-slate-950 border border-white/10 text-slate-400 hover:text-white font-semibold text-xs cursor-pointer">Cancel</button>
               </div>
             </form>
           )}
         </div>
 
-        {/* Right Side: Player Card and Tournament Stats */}
+        {/* Right Side: Player Card and Expandable Tournament Stats */}
         <div className="md:col-span-2 space-y-6">
           {matchedPlayer ? (
             <>
-              {/* Linked Player Card */}
+              {/* Linked Player Card Badge element wrapper component */}
               <div className="bg-slate-900/20 border border-white/5 rounded-3xl p-6">
                 <h3 className="text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
                   <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -352,66 +305,97 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Tournament History */}
+              {/* Tournament History Container Card */}
               <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-6 md:p-8 shadow-xl backdrop-blur-md relative overflow-hidden">
                 <h3 className="text-lg font-bold text-white mb-6">Tournament History</h3>
                 <div className="space-y-4">
-                  {/* Season 1 Entry */}
-                  <div className="flex items-center justify-between p-4 bg-slate-950/60 border border-white/5 rounded-2xl">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-slate-200">RKM Legacy League Season 1</span>
-                      <span className="text-xs text-slate-500 mt-0.5">Format: Round Robin League</span>
-                    </div>
-                    <div className="text-right">
-                      {season1Team ? (
-                        <div className="flex flex-col items-end">
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                            {season1Team}
-                          </span>
-                          {season1Team === "Victorious Five" && (
-                            <span className="text-[10px] font-extrabold text-amber-400 mt-1 uppercase tracking-wider flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5a2 2 0 10-2 2h2zm0 0H4v5a8 8 0 008 8h0a8 8 0 008-8V8h-8z" />
+                  
+                  {/* ─── SEASON 1 CONTAINER BLOCK ─── */}
+                  <div className="bg-slate-950/60 border border-white/5 rounded-2xl overflow-hidden transition-all duration-300">
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-200">RKM Legacy League Season 1</span>
+                        <span className="text-xs text-slate-500 mt-0.5">Format: Round Robin League</span>
+                      </div>
+                      <div className="text-right">
+                        {season1Team ? (
+                          <div className="flex flex-col items-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setShowSeason1Roster(!showSeason1Roster)}
+                              className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <span>{season1Team}</span>
+                              <svg className={`w-3 h-3 transition-transform duration-200 ${showSeason1Roster ? 'rotate-180' : 'rotate-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                               </svg>
-                              Champion
-                            </span>
-                          )}
-                          {season1Team === "Goal Digger FC" && (
-                            <span className="text-[10px] font-extrabold text-slate-300 mt-1 uppercase tracking-wider">
-                              🥈 Runner-Up
-                            </span>
-                          )}
-                          {isSeason1Captain && (
-                            <span className="text-[9px] font-extrabold text-indigo-300 mt-0.5 uppercase tracking-wider">Captain</span>
-                          )}
+                            </button>
+                            {season1Team === "Victorious Five" && <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-wider">🥇 Champion</span>}
+                            {season1Team === "Goal Digger FC" && <span className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider">🥈 Runner-Up</span>}
+                            {isSeason1Captain && <span className="text-[9px] font-extrabold text-indigo-300 uppercase tracking-wider">Captain</span>}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-600 italic">Not Participated</span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Collapsible Roster Panel Tray for Season 1 */}
+                    <div className={`transition-all duration-300 overflow-hidden bg-slate-950/90 ${showSeason1Roster && season1RosterPlayers.length > 0 ? 'max-h-64 border-t border-white/5 p-4 space-y-1.5' : 'max-h-0'}`}>
+                      <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2">Team Members:</p>
+                      {season1RosterPlayers.map((member, i) => (
+                        <div key={member.index} className="flex items-center justify-between text-xs py-1 px-2 rounded bg-white/2 border border-white/5">
+                          <span className={`${member.name.toLowerCase() === pName.toLowerCase() ? 'text-indigo-400 font-bold' : 'text-slate-300'}`}>
+                            {member.name} {[0, 5, 10, 15, 20, 25].includes(i) && <span className="text-amber-400 text-[9px] font-mono font-bold ml-1">(C)</span>}
+                          </span>
+                          {posBadge(member.position || 'FW')}
                         </div>
-                      ) : (
-                        <span className="text-xs text-slate-600 italic">Not Participated</span>
-                      )}
+                      ))}
                     </div>
                   </div>
 
-                  {/* Season 2 Entry */}
-                  <div className="flex items-center justify-between p-4 bg-slate-950/60 border border-white/5 rounded-2xl">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-slate-200">RKM Legacy League Season 2</span>
-                      <span className="text-xs text-slate-500 mt-0.5">Format: Lottery Draft Draw</span>
-                    </div>
-                    <div className="text-right">
-                      {season2Team ? (
-                        <div className="flex flex-col items-end">
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                            {season2Team}
+                  {/* ─── SEASON 2 CONTAINER BLOCK ─── */}
+                  <div className="bg-slate-950/60 border border-white/5 rounded-2xl overflow-hidden transition-all duration-300">
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-200">RKM Legacy League Season 2</span>
+                        <span className="text-xs text-slate-500 mt-0.5">Format: Lottery Draft Draw</span>
+                      </div>
+                      <div className="text-right">
+                        {season2Team ? (
+                          <div className="flex flex-col items-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setShowSeason2Roster(!showSeason2Roster)}
+                              className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <span>{season2Team}</span>
+                              <svg className={`w-3 h-3 transition-transform duration-200 ${showSeason2Roster ? 'rotate-180' : 'rotate-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            {isSeason2Captain && <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-wider">★ Captain</span>}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-500 font-semibold bg-white/5 border border-white/5 px-2 py-1 rounded-lg animate-pulse">
+                            Awaiting Draft / Pending
                           </span>
-                          {isSeason2Captain && (
-                            <span className="text-[9px] font-extrabold text-amber-400 mt-1 uppercase tracking-wider">Captain</span>
-                          )}
+                        )}
+                      </div>
+                    </div>
+                    {/* Collapsible Roster Panel Tray for Season 2 */}
+                    <div className={`transition-all duration-300 overflow-hidden bg-slate-950/90 ${showSeason2Roster && season2RosterPlayers.length > 0 ? 'max-h-64 border-t border-white/5 p-4 space-y-1.5' : 'max-h-0'}`}>
+                      <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-2">Team Members:</p>
+                      {season2RosterPlayers.map((member, idx) => (
+                        <div key={member.index} className="flex items-center justify-between text-xs py-1 px-2 rounded bg-white/2 border border-white/5">
+                          <span className={`${member.name.toLowerCase() === pName.toLowerCase() ? 'text-purple-400 font-bold' : 'text-slate-300'}`}>
+                            {member.name} {idx === 0 && <span className="text-amber-400 text-[9px] font-bold ml-1">(C)</span>}
+                          </span>
+                          {posBadge(member.position || 'FW')}
                         </div>
-                      ) : (
-                        <span className="text-xs text-slate-600 italic">Awaiting Draft / Pending</span>
-                      )}
+                      ))}
                     </div>
                   </div>
+
                 </div>
               </div>
             </>
@@ -422,12 +406,7 @@ const Profile = () => {
               </svg>
               <h3 className="text-xl font-bold text-slate-400 mb-2">No Player Record Found</h3>
               <p className="text-sm text-slate-600 max-w-md">
-                We couldn't find a player named <strong className="text-slate-400">"{pName || 'None Linked'}"</strong> in our tournament draft registry. 
-                {pName ? (
-                  <span> Please ensure your Player Name is linked correctly and spelled exactly as it appears in the players pool list.</span>
-                ) : (
-                  <span> Please click "Edit Profile / Link Player" on the left and enter your registered tournament Player Name to link your stats.</span>
-                )}
+                We couldn't find a player named <strong className="text-slate-400">"{pName || 'None Linked'}"</strong> in our registry. Please ensure your username link matches your player card.
               </p>
             </div>
           )}

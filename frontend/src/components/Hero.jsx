@@ -11,8 +11,8 @@ const Hero = () => {
                 const res = await fetch(`${API_BASE}/lottery/state`, { credentials: "include" });
                 const data = await res.json();
                 if (data.success && data.state) {
-                    // If lottery is in running phase, it's live
-                    if (data.state.status === "running") {
+                    // If lottery is in setup or running phase, it's live
+                    if (data.state.status === "setup" || data.state.status === "running") {
                         setLotteryActive(true);
                     } else {
                         setLotteryActive(false);

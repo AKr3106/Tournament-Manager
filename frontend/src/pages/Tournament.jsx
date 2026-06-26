@@ -183,7 +183,7 @@ const Tournament = () => {
 
       <SeasonButton activeSeason="s2" />
 
-      {/* 📊 Stats / Highlight Grid Panel Block[cite: 6] */}
+      {/* 📊 Stats / Highlight Grid Panel Block[cite: 8] */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
         <div className="relative group overflow-hidden rounded-2xl bg-slate-900/50 border border-white/10 p-8 hover:border-indigo-500/50 transition-all duration-300">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/10 rounded-full group-hover:scale-125 transition-transform duration-500"></div>
@@ -237,7 +237,7 @@ const Tournament = () => {
         <TeamCard teams={teams} />
       </div>
 
-      {/* Standings Tables[cite: 6] */}
+      {/* Standings Tables[cite: 8] */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         <div className="rounded-2xl bg-slate-900/30 border border-white/10 p-6 shadow-xl backdrop-blur-md">
           <h4 className="font-extrabold text-xl text-indigo-400 mb-4">GROUP A</h4>
@@ -250,7 +250,17 @@ const Tournament = () => {
             <tbody className="divide-y divide-white/5">
               {groupA.map((team, idx) => (
                 <tr key={team.name} className={`hover:bg-white/5 ${idx === 0 ? 'bg-indigo-500/5' : ''}`}>
-                  <td className="py-3 px-2 text-center font-bold">{idx === 0 ? "1🏆" : idx + 1}</td>
+                  <td className="py-3 px-2 text-center font-bold">
+                    {/* Wrapped inside a flex layout container to keep position indicator elements aligned side-by-side cleanly */}
+                    {idx === 0 ? (
+                      <div className="flex items-center justify-center gap-1 whitespace-nowrap">
+                        <span>1</span>
+                        <span>🏆</span>
+                      </div>
+                    ) : (
+                      idx + 1
+                    )}
+                  </td>
                   <td className="py-3 px-2 font-semibold font-sans">{team.name}</td>
                   <td className="py-3 text-center">{team.played}</td>
                   <td className="py-3 text-center">{team.goalDifference}</td>
@@ -272,7 +282,17 @@ const Tournament = () => {
             <tbody className="divide-y divide-white/5">
               {groupB.map((team, idx) => (
                 <tr key={team.name} className={`hover:bg-white/5 ${idx === 0 ? 'bg-purple-500/5' : ''}`}>
-                  <td className="py-3 px-2 text-center font-bold">{idx === 0 ? "1🏆" : idx + 1}</td>
+                  <td className="py-3 px-2 text-center font-bold">
+                    {/* Wrapped inside a flex layout container to keep position indicator elements aligned side-by-side cleanly */}
+                    {idx === 0 ? (
+                      <div className="flex items-center justify-center gap-1 whitespace-nowrap">
+                        <span>1</span>
+                        <span>🏆</span>
+                      </div>
+                    ) : (
+                      idx + 1
+                    )}
+                  </td>
                   <td className="py-3 px-2 font-semibold font-sans">{team.name}</td>
                   <td className="py-3 text-center">{team.played}</td>
                   <td className="py-3 text-center">{team.goalDifference}</td>
@@ -284,7 +304,7 @@ const Tournament = () => {
         </div>
       </div>
 
-      {/* Fixtures Timeline Section[cite: 6] */}
+      {/* Fixtures Timeline Section[cite: 8] */}
       <div className="bg-slate-900/20 border border-white/10 rounded-3xl p-6 md:p-8 mb-12">
         <h4 className="font-bold text-lg text-white border-b border-white/5 pb-3 mb-6">Fixture Schedule</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -307,7 +327,7 @@ const Tournament = () => {
           })}
         </div>
 
-        {/* Grand Final Card Container[cite: 6] */}
+        {/* Grand Final Card Container[cite: 8] */}
         <div className="mt-8 bg-linear-to-r from-indigo-950 to-purple-950 border border-purple-500/30 rounded-2xl p-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
@@ -333,7 +353,7 @@ const Tournament = () => {
             )}
           </div>
 
-          {/* Render Stats info for Grand Final if complete[cite: 6] */}
+          {/* Render Stats info for Grand Final if complete[cite: 8] */}
           {isGroupStageComplete && (finalMatch.score1 !== '' || finalMatch.scorers?.length > 0) && (
             <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-400">
               <div>
