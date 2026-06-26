@@ -14,7 +14,6 @@ const SignIn = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Dynamically load Google Client SDK script if it doesn't exist
     const id = "google-gsi-client";
     let script = document.getElementById(id);
     if (!script) {
@@ -134,7 +133,6 @@ const SignIn = () => {
         throw new Error(data.message || "Invalid credentials");
       }
 
-      // Check if user is attempting to sign in as admin but doesn't have the admin role
       if (role === 'admin' && data.user.role !== 'admin') {
         try {
           await fetch(`${API_BASE}/auth/logout`, {
@@ -148,10 +146,7 @@ const SignIn = () => {
       }
 
       setIsSubmitting(false);
-      
-      // Store user details in localStorage
       localStorage.setItem('user', JSON.stringify(data.user));
-      
       alert(`Successfully logged in as ${data.user.name}!`);
       
       if (role === 'admin') {
@@ -288,15 +283,15 @@ const SignIn = () => {
               {errors.password && <p className="mt-1 text-[11px] text-rose-400">{errors.password}</p>}
             </div>
 
-            {/* Remember/ForgotPassword options (Admin vs Normal User context) */}
+            {/* Remember/ForgotPassword options */}
             <div className="flex items-center justify-between text-[11px] pt-0.5">
               <label className="flex items-center gap-1.5 cursor-pointer text-slate-400 hover:text-slate-300">
                 <input type="checkbox" className="rounded bg-slate-950 border-white/10 text-indigo-500 focus:ring-0 focus:ring-offset-0" />
                 <span>Keep me signed in</span>
               </label>
-              <a href="#" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+              <Link to="/forgot-password" className="text-indigo-400 hover:text-indigo-300 transition-colors">
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             {/* Submit Button */}
@@ -308,7 +303,7 @@ const SignIn = () => {
               {isSubmitting ? (
                 <>
                   <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   <span>Signing In...</span>

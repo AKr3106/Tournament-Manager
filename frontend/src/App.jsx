@@ -7,6 +7,7 @@ import TournamentS1 from './pages/TournamentS1'
 import TournamentShort from './components/TournamentShort'
 import SignIn from './pages/SignIn'
 import CreateAccount from './pages/CreateAccount'
+import ForgotPassword from './pages/ForgotPassword' // Added import
 import About from './pages/About'
 import Players from './pages/Players'
 import PlayerPreview from './components/PlayerPreview'
@@ -25,7 +26,6 @@ const HomeDivider = () => (
   </div>
 );
 
-// Route protection component
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const savedUser = localStorage.getItem('user');
   let user = null;
@@ -55,14 +55,13 @@ const App = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const showNavbar = !['/signin', '/create-account'].includes(location.pathname)
+  // Added '/forgot-password' here so the navbar cleanly hides on this page too
+  const showNavbar = !['/signin', '/create-account', '/forgot-password'].includes(location.pathname)
 
   return (
-    // REMOVED side paddings (px-2 sm:px-4, etc.) from this top-level container element
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30 relative">
       {showNavbar && <Navbar />}
       
-      {/* SHIFTED layout screen side padding safely onto this inner view page routing content panel */}
       <div className="grow relative z-10 px-4 sm:px-6 lg:px-8">
         <Routes>
           <Route path="/" element={
@@ -85,6 +84,7 @@ const App = () => {
           <Route path="/rules" element={<Rules />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/create-account" element={<CreateAccount />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} /> {/* Added Route */}
           <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
           <Route path="/lottery" element={<ProtectedRoute><Lottery /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

@@ -1,6 +1,9 @@
 import User from "../models/user.model.js";
 import { OAuth2Client } from "google-auth-library";
 import connectDB from "../db/db.js"; // <-- Added database import
+import crypto from "crypto";
+import nodemailer from "nodemailer";
+import bcrypt from "bcryptjs";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -275,5 +278,99 @@ export const updateProfile = async (req, res) => {
             message: "Failed to update profile",
             error: error.message,
         });
+    }
+};
+
+// @desc    Forgot Password - Send reset link to email
+// @route   POST /api/auth/forgot-password
+// @access  Public
+export const forgotPassword = async (req, res) => {
+    try {
+        await connectDB();
+        
+        const { emailid } = req.body;
+        if (!emailid) {
+            return res.status(400).json({ success: false, message: "Please provide an email ID" });
+        }
+
+        const user = await User.findOne({ emailid });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found with this email" });
+        }
+
+        // Generate token
+        const resetToken = crypto.randomBytes(32).toString("hex");
+
+        // Set token and expiry (1 hour) on user model
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000;
+        await user.save();
+
+        // Create nodemailer transporter
+        const transporter = nodemailer.createTransport({
+            service: "Gmail", // You can configure this via env vars later if needed
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        const resetUrl = `http://localhost:5173/reset-password?token=${resetToken}`;
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: user.emailid,
+            subject: "RKM Legacy League - Password Reset Request",
+            html: `
+                <div style="font-family: sans-serif; padding: 20px; background: #0F172A; color: #F8FAFC; border-radius: 10px;">
+                    <h2 style="color: #818CF8;">Password Reset Request</h2>
+                    <p>You are receiving this email because you (or someone else) have requested the reset of a password.</p>
+                    <p>Please click on the following link, or paste this into your browser to complete the process:</p>
+                    <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; margin: 20px 0; background: #6366F1; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+                    <p style="color: #94A3B8; font-size: 12px;">This link will expire in 1 hour.</p>
+                    <p style="color: #94A3B8; font-size: 12px;">If you did not request this, please ignore this email and your password will remain unchanged.</p>
+                </div>
+            `,
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ success: true, message: "Password reset link sent to your email" });
+    } catch (error) {
+        console.error("Error in forgotPassword:", error);
+        res.status(500).json({ success: false, message: "Error sending email", error: error.message });
+    }
+};
+
+// @desc    Reset Password - Verify token and update password
+// @route   POST /api/auth/reset-password
+// @access  Public
+export const resetPassword = async (req, res) => {
+    try {
+        await connectDB();
+        
+        const { token, newPassword } = req.body;
+        if (!token || !newPassword) {
+            return res.status(400).json({ success: false, message: "Token and new password are required" });
+        }
+
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Password reset token is invalid or has expired" });
+        }
+
+        // Set the new password (model pre-save hook handles hashing)
+        user.password = newPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        res.status(200).json({ success: true, message: "Password has been reset successfully" });
+    } catch (error) {
+        console.error("Error in resetPassword:", error);
+        res.status(500).json({ success: false, message: "Failed to reset password", error: error.message });
     }
 };
