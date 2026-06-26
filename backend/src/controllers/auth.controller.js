@@ -137,7 +137,7 @@ export const logoutUser = async (req, res) => {
             httpOnly: true,
             secure: isProduction,
             sameSite: isProduction ? "none" : "strict",
-            expires: new Date(Date.now() + 10 * 1000), 
+            expires: new Date(Date.now() + 10 * 1000),
         });
 
         res.status(200).json({
@@ -197,8 +197,8 @@ export const googleLogin = async (req, res) => {
                 name: name,
                 emailid: email,
                 password: randomPassword,
-                phonenumber: "0000000000", 
-                playerName: "", 
+                phonenumber: "0000000000",
+                playerName: "",
                 role: "user"
             });
         }
@@ -222,7 +222,7 @@ export const updateProfile = async (req, res) => {
         await connectDB(); // <-- Added to prevent serverless crash
 
         const { playerName, phonenumber, name, myTeam } = req.body;
-        
+
         const user = await User.findById(req.user._id);
         if (!user) {
             return res.status(404).json({
@@ -248,7 +248,7 @@ export const updateProfile = async (req, res) => {
         if (phonenumber !== undefined) {
             user.phonenumber = phonenumber.trim();
         }
-        
+
         if (myTeam !== undefined) {
             user.myTeam = myTeam.trim();
         }
@@ -287,7 +287,7 @@ export const updateProfile = async (req, res) => {
 export const forgotPassword = async (req, res) => {
     try {
         await connectDB();
-        
+
         const { emailid } = req.body;
         if (!emailid) {
             return res.status(400).json({ success: false, message: "Please provide an email ID" });
@@ -315,7 +315,9 @@ export const forgotPassword = async (req, res) => {
             },
         });
 
-        const resetUrl = `http://localhost:5173/reset-password?token=${resetToken}`;
+        // Dynamically grab the domain the user is making the request from (Vercel or Localhost)
+        const frontendUrl = req.headers.origin || "http://localhost:5173";
+        const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: user.emailid,
@@ -347,7 +349,7 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
     try {
         await connectDB();
-        
+
         const { token, newPassword } = req.body;
         if (!token || !newPassword) {
             return res.status(400).json({ success: false, message: "Token and new password are required" });
