@@ -19,7 +19,8 @@
       "dest": "index.mjs"
     },
     {
-      "handle": "filesystem"
+      "src": "^/(assets/.*|.*\\.(png|jpg|svg|ico|json|css|js))$",
+      "dest": "frontend/$1"
     },
     {
       "src": "/(.*)",
