@@ -8,6 +8,7 @@ import TournamentShort from './components/TournamentShort'
 import SignIn from './pages/SignIn'
 import CreateAccount from './pages/CreateAccount'
 import ForgotPassword from './pages/ForgotPassword' // Added import
+import ResetPassword from './pages/ResetPassword' // Added import
 import About from './pages/About'
 import Players from './pages/Players'
 import PlayerPreview from './components/PlayerPreview'
@@ -55,8 +56,8 @@ const App = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // Added '/forgot-password' here so the navbar cleanly hides on this page too
-  const showNavbar = !['/signin', '/create-account', '/forgot-password'].includes(location.pathname)
+  // Added '/forgot-password' and '/reset-password' here so the navbar cleanly hides on these pages too
+  const showNavbar = !['/signin', '/create-account', '/forgot-password', '/reset-password'].includes(location.pathname)
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30 relative">
@@ -85,6 +86,7 @@ const App = () => {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/create-account" element={<CreateAccount />} />
           <Route path="/forgot-password" element={<ForgotPassword />} /> {/* Added Route */}
+          <Route path="/reset-password" element={<ResetPassword />} /> {/* Added Route */}
           <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
           <Route path="/lottery" element={<ProtectedRoute><Lottery /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
