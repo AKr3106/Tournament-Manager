@@ -38,12 +38,10 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   }
 
   if (!user) {
-    // If not logged in, redirect to signin page
     return <Navigate to="/signin" replace />;
   }
 
   if (adminOnly && user.role !== 'admin') {
-    // If route requires admin but user is not admin, redirect to home page
     return <Navigate to="/" replace />;
   }
 
@@ -60,9 +58,12 @@ const App = () => {
   const showNavbar = !['/signin', '/create-account'].includes(location.pathname)
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30 relative px-2 sm:px-4 md:px-6 lg:px-8">
+    // REMOVED side paddings (px-2 sm:px-4, etc.) from this top-level container element
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30 relative">
       {showNavbar && <Navbar />}
-      <div className="grow relative z-10">
+      
+      {/* SHIFTED layout screen side padding safely onto this inner view page routing content panel */}
+      <div className="grow relative z-10 px-4 sm:px-6 lg:px-8">
         <Routes>
           <Route path="/" element={
             <>

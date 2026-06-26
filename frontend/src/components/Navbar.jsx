@@ -68,7 +68,7 @@ const Navbar = () => {
                 <div className="flex justify-between items-center h-14 md:h-20 w-full">
                     
                     {/* Logo */}
-                    <div className="-ml-2 lg:-ml-6 shrink-0 flex items-center gap-2 md:gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+                    <div className="-ml-2 xl:-ml-6 shrink-0 flex items-center gap-2 md:gap-3 cursor-pointer group" onClick={() => navigate('/')}>
                         <img
                             src={logo}
                             alt="RKM Legacy League Logo"
@@ -79,8 +79,8 @@ const Navbar = () => {
                         </span>
                     </div>
 
-                    {/* Desktop Menu */}
-                    <div className="hidden lg:flex items-center space-x-4 xl:space-x-8">
+                    {/* Desktop Menu - Changed breakpoint from hidden md:flex/hidden lg:flex to hidden xl:flex */}
+                    <div className="hidden xl:flex items-center space-x-8">
                         <Link to="/" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Home</Link>
                         <Link to="/about" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">About</Link>
                         <Link to="/tournament" className="text-slate-300 hover:text-white transition-colors duration-200 font-medium text-sm tracking-wide">Tournament</Link>
@@ -133,8 +133,8 @@ const Navbar = () => {
                         )}
                     </div>
 
-                    {/* 📱 Mobile and Tablet Actions Bar Controls */}
-                    <div className="lg:hidden flex items-center gap-3 mr-2 sm:mr-4">
+                    {/* 📱 Mobile and Tablet Controls - Visible on everything below xl width layout */}
+                    <div className="-mr-2 flex items-center gap-3 xl:hidden">
                         
                         {/* Mobile Responsive Theme Toggle */}
                         <button
@@ -185,9 +185,9 @@ const Navbar = () => {
                 </div>
             </div>
 
-            {/* Mobile Menu Expanded Drawer */}
+            {/* Mobile / Tablet Menu Expanded Drawer Panel */}
             {isOpen && (
-                <div className="lg:hidden bg-slate-900/95 backdrop-blur-xl border-b border-white/10 transition-all duration-200">
+                <div className="xl:hidden bg-slate-900/95 backdrop-blur-xl border-b border-white/10 transition-all duration-200">
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                         <Link to="/" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">Home</Link>
                         <Link to="/about" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors">About</Link>
