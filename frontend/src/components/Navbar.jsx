@@ -134,7 +134,7 @@ const Navbar = () => {
                     </div>
 
                     {/* 📱 Mobile and Tablet Actions Bar Controls */}
-                    <div className="lg:hidden flex items-center gap-3">
+                    <div className="lg:hidden flex items-center gap-3 mr-2 sm:mr-4">
                         
                         {/* Mobile Responsive Theme Toggle */}
                         <button
