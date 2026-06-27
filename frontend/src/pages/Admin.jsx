@@ -176,7 +176,7 @@ const Admin = () => {
       DF: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
       GK: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     };
-    const labels = { FW: 'Forward', DF: 'Defender', GK: 'Goalkeeper' };
+    const labels = { FW: 'FW', DF: 'DF', GK: 'GK' };
     return (
       <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border uppercase tracking-wider ${styles[pos] || 'bg-slate-500/10 text-slate-400 border-slate-500/20'}`}>
         {labels[pos] || pos}
@@ -278,26 +278,34 @@ const Admin = () => {
           <div className="bg-slate-900/20 border border-white/10 rounded-2xl overflow-hidden">
             <div className="divide-y divide-white/5">
               {players.map((player) => (
-                <div key={player.index} className="flex items-center justify-between px-6 py-3.5 group hover:bg-white/2 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <span className="text-xs font-mono text-slate-600 w-8">#{String(player.index).padStart(2, '0')}</span>
+                <div key={player.index} className="flex items-center justify-between px-4 sm:px-6 py-3.5 group hover:bg-white/2 transition-colors w-full gap-4">
+                  {/* Left Side Group */}
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                    <span className="text-xs font-mono text-slate-600 shrink-0">#{String(player.index).padStart(2, '0')}</span>
                     {editingPlayerIndex === player.index ? (
-                      <div className="flex items-center gap-2">
-                        <input type="text" value={editingPlayerName} onChange={(e) => setEditingPlayerName(e.target.value)} className="bg-slate-950 border border-indigo-500/50 rounded px-2 py-1 text-xs text-white" />
-                        <select value={editingPlayerPosition} onChange={(e) => setEditingPlayerPosition(e.target.value)} className="bg-slate-950 border border-indigo-500/50 rounded px-2 py-1 text-xs text-white">
+                      <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
+                        <input type="text" value={editingPlayerName} onChange={(e) => setEditingPlayerName(e.target.value)} className="bg-slate-950 border border-indigo-500/50 rounded px-2 py-1 text-xs text-white max-w-35 sm:max-w-none flex-1 min-w-0" />
+                        <select value={editingPlayerPosition} onChange={(e) => setEditingPlayerPosition(e.target.value)} className="bg-slate-950 border border-indigo-500/50 rounded px-2 py-1 text-xs text-white shrink-0">
                           <option value="FW">FW</option><option value="DF">DF</option><option value="GK">GK</option>
                         </select>
-                        <button onClick={() => handleSavePlayer(player.index)} className="text-emerald-400 font-bold px-1 cursor-pointer">✓</button>
-                        <button onClick={() => setEditingPlayerIndex(null)} className="text-slate-400 font-bold px-1 cursor-pointer">✕</button>
+                        <div className="flex gap-1 shrink-0">
+                          <button onClick={() => handleSavePlayer(player.index)} className="text-emerald-400 font-bold px-1.5 py-0.5 bg-emerald-500/10 rounded border border-emerald-500/20 text-xs cursor-pointer">✓</button>
+                          <button onClick={() => setEditingPlayerIndex(null)} className="text-slate-400 font-bold px-1.5 py-0.5 bg-white/5 rounded border border-white/10 text-xs cursor-pointer">✕</button>
+                        </div>
                       </div>
                     ) : (
-                      <span className="font-semibold text-sm text-slate-200">{player.name}</span>
+                      /* Fixed word-breaking so surnames move down fluidly on narrow layout viewports instead of cutting off */
+                      <span className="font-semibold text-sm text-slate-200 wrap-break-word whitespace-normal flex-1 min-w-0 pr-2">
+                        {player.name}
+                      </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-4">
-                    {posBadge(player.position)}
+                  
+                  {/* Right Side Control Section Fixed Layout Inline */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    {editingPlayerIndex !== player.index && posBadge(player.position)}
                     {editingPlayerIndex !== player.index && (
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="flex items-center gap-1.5">
                         <button 
                           onClick={() => { setEditingPlayerIndex(player.index); setEditingPlayerName(player.name); setEditingPlayerPosition(player.position || 'FW'); }} 
                           className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 hover:bg-indigo-50 hover:text-white transition-all duration-200 cursor-pointer"
@@ -338,23 +346,28 @@ const Admin = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {teams.map((team, idx) => (
-              <div key={team.index} className="relative group bg-slate-900/30 border border-white/10 rounded-2xl p-6 overflow-hidden hover:border-white/20 transition-all duration-300">
+              <div key={team.index} className="relative group bg-slate-900/30 border border-white/10 rounded-2xl p-5 overflow-hidden hover:border-white/20 transition-all duration-300">
                 <div className={`absolute top-0 left-0 w-full h-1 bg-linear-to-r ${teamColors[idx % teamColors.length]} opacity-60`}></div>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <span className="text-[10px] text-slate-500 font-mono">Team {team.index}</span>
+                <div className="flex flex-row items-center justify-between gap-4 h-full w-full">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] text-slate-500 font-mono block">Team {team.index}</span>
                     {editingTeamIndex === team.index ? (
-                      <div className="flex items-center gap-2 mt-1">
-                        <input type="text" value={editingTeamName} onChange={(e) => setEditingTeamName(e.target.value)} className="w-full bg-slate-950 border border-purple-500/50 rounded px-2 py-1 text-xs text-white" />
-                        <button onClick={() => handleSaveTeamName(team.index)} className="text-emerald-400 font-bold cursor-pointer">✓</button>
-                        <button onClick={() => setEditingTeamIndex(null)} className="text-slate-400 font-bold cursor-pointer">✕</button>
+                      <div className="flex items-center gap-1.5 mt-1 w-full">
+                        <input type="text" value={editingTeamName} onChange={(e) => setEditingTeamName(e.target.value)} className="w-full bg-slate-950 border border-purple-500/50 rounded px-2 py-1 text-xs text-white min-w-0" />
+                        <div className="flex gap-0.5 shrink-0">
+                          <button onClick={() => handleSaveTeamName(team.index)} className="text-emerald-400 font-bold px-1.5 py-0.5 bg-emerald-500/10 rounded border border-emerald-500/20 text-xs cursor-pointer">✓</button>
+                          <button onClick={() => setEditingTeamIndex(null)} className="text-slate-400 font-bold px-1.5 py-0.5 bg-white/5 rounded border border-white/10 text-xs cursor-pointer">✕</button>
+                        </div>
                       </div>
                     ) : (
-                      <h3 className="text-lg font-bold text-white mt-1">{team['team-name']}</h3>
+                      /* Added word breaking for long team titles here too */
+                      <h3 className="text-base font-bold text-white mt-0.5 wrap-break-word whitespace-normal pr-1">
+                        {team['team-name']}
+                      </h3>
                     )}
                   </div>
                   {editingTeamIndex !== team.index && (
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button 
                         onClick={() => { setEditingTeamIndex(team.index); setEditingTeamName(team['team-name']); }} 
                         className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 hover:bg-indigo-50 hover:text-white transition-all duration-200 cursor-pointer"

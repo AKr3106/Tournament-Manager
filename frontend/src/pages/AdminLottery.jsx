@@ -61,15 +61,15 @@ const AdminLottery = () => {
 
   // Fetch initial data (Re-runs safely if modular seasons expand)
   useEffect(() => {
-    const fetchData = async () => {
-      if (selectedSeason === 's1') {
-        setAllPlayers([]);
-        setAllTeams([]);
-        setSlots([]);
-        setLoading(false);
-        return;
-      }
+    if (selectedSeason === 's1') {
+      setAllPlayers([]);
+      setAllTeams([]);
+      setSlots([]);
+      setLoading(false);
+      return;
+    }
 
+    const fetchData = async () => {
       try {
         setLoading(true);
         const playersRes = await fetch(`${API_BASE}/players`, { credentials: "include" });
@@ -529,19 +529,24 @@ const AdminLottery = () => {
             </div>
           </div>
 
-          {/* Players Roster */}
-          <div className="space-y-4 border-t border-white/5 pt-6">
-            <div className="flex justify-between items-center gap-4">
-              <h4 className="font-bold text-white text-sm whitespace-nowrap">Select Captains ({selectedPlayers.length})</h4>
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={handleSelectAll} className="text-[10px] bg-white/5 text-slate-300 font-bold px-2 py-1 rounded border border-white/10 hover:bg-white/10 cursor-pointer">All</button>
-                <button type="button" onClick={handleDeselectAll} className="text-[10px] bg-white/5 text-slate-300 font-bold px-2 py-1 rounded border border-white/10 hover:bg-white/10 cursor-pointer">None</button>
+          {/* Players Roster Area */}
+          <div className="space-y-4">
+            {/* Responsive and container-safe flex row structure for search filters */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/5 pt-6">
+              <h4 className="font-bold text-white text-sm whitespace-nowrap">
+                Select Captains ({selectedPlayers.length})
+              </h4>
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="flex items-center gap-2 shrink-0">
+                  <button type="button" onClick={handleSelectAll} className="text-[10px] bg-white/5 text-slate-300 font-bold px-2 py-1 rounded border border-white/10 hover:bg-white/10 cursor-pointer">All</button>
+                  <button type="button" onClick={handleDeselectAll} className="text-[10px] bg-white/5 text-slate-300 font-bold px-2 py-1 rounded border border-white/10 hover:bg-white/10 cursor-pointer">None</button>
+                </div>
                 <input
                   type="text"
                   placeholder="Search..."
                   value={playerSearchQuery}
                   onChange={(e) => setPlayerSearchQuery(e.target.value)}
-                  className="bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none"
+                  className="bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none w-full max-w-40 sm:max-w-50"
                 />
               </div>
             </div>
@@ -560,9 +565,9 @@ const AdminLottery = () => {
                       isSelected ? "bg-indigo-500/10 border-indigo-500/40 text-white" : "bg-slate-950/40 border-white/5 text-slate-400"
                     }`}
                   >
-                    <div>
-                      <p className="text-xs font-semibold">{player.name}</p>
-                      {captainOf && <span className="text-[10px] text-amber-400 font-bold">★ {captainOf}</span>}
+                    <div className="min-w-0 flex-1 pr-1">
+                      <p className="text-xs font-semibold truncate">{player.name}</p>
+                      {captainOf && <span className="text-[10px] text-amber-400 font-bold block truncate">★ {captainOf}</span>}
                     </div>
                     {posBadge(player.position)}
                   </div>
