@@ -37,7 +37,6 @@ export default function MatchManager() {
       .then(data => data.success && setDbTeams(data.teams))
       .catch(err => console.error(err));
 
-    // Dynamically query based on selected tab configurations
     const keyPrefix = `rkm_${selectedSeason}`;
     const savedFixtures = localStorage.getItem(`${keyPrefix}_fixtures`);
     if (savedFixtures) setFixtures(JSON.parse(savedFixtures));
@@ -271,20 +270,30 @@ export default function MatchManager() {
                 </div>
               </div>
 
-              {/* Advanced Multi-Stats Input Logs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
-                <div className="space-y-3">
-                  <label className="block text-xs text-slate-300 font-bold uppercase">⚽ Goalscorers</label>
-                  <div className="flex gap-2">
-                    <select value={selectedScorer} onChange={(e) => setSelectedScorer(e.target.value)} className="flex-1 bg-slate-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none">
+              {/* Advanced Multi-Stats Input Logs - Refactored for permanent inline row display on Tablet viewports */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2">
+                {/* Goalscorers Row Block */}
+                <div className="flex flex-col gap-2">
+                  <label className="block text-xs text-slate-300 font-bold uppercase tracking-wide">⚽ Goalscorers</label>
+                  <div className="flex items-center gap-2 w-full">
+                    <select 
+                      value={selectedScorer} 
+                      onChange={(e) => setSelectedScorer(e.target.value)} 
+                      className="flex-1 min-w-0 bg-slate-900 border border-white/10 rounded-xl p-2.5 text-xs text-white focus:outline-none cursor-pointer"
+                    >
                       <option value="">Select Scorer...</option>
                       {players.map(p => <option key={p.index} value={p.index}>{p.name}</option>)}
                     </select>
-                    <button onClick={() => { addStatLine('scorers', selectedScorer); setSelectedScorer(''); }} className="px-3 bg-indigo-500 text-white rounded-lg text-xs font-bold cursor-pointer">Add</button>
+                    <button 
+                      onClick={() => { addStatLine('scorers', selectedScorer); setSelectedScorer(''); }} 
+                      className="px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold tracking-wide shrink-0 transition-colors cursor-pointer"
+                    >
+                      Add
+                    </button>
                   </div>
-                  <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto mt-1">
                     {currentMatch.scorers?.map((s, i) => (
-                      <div key={i} className="flex items-center justify-between bg-rose-500/5 border border-rose-500/10 px-2 py-1 rounded text-xs text-rose-400">
+                      <div key={i} className="flex items-center justify-between bg-rose-500/5 border border-rose-500/10 px-2.5 py-1.5 rounded-lg text-xs text-rose-400">
                         <span>⚽ {s.name}</span>
                         <button onClick={() => removeStatLine('scorers', i)} className="text-slate-500 hover:text-rose-400 font-bold px-1 cursor-pointer">✕</button>
                       </div>
@@ -292,18 +301,28 @@ export default function MatchManager() {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <label className="block text-xs text-slate-300 font-bold uppercase">👟 Assists</label>
-                  <div className="flex gap-2">
-                    <select value={selectedAssistant} onChange={(e) => setSelectedAssistant(e.target.value)} className="flex-1 bg-slate-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none">
+                {/* Assists Row Block */}
+                <div className="flex flex-col gap-2">
+                  <label className="block text-xs text-slate-300 font-bold uppercase tracking-wide">👟 Assists</label>
+                  <div className="flex items-center gap-2 w-full">
+                    <select 
+                      value={selectedAssistant} 
+                      onChange={(e) => setSelectedAssistant(e.target.value)} 
+                      className="flex-1 min-w-0 bg-slate-900 border border-white/10 rounded-xl p-2.5 text-xs text-white focus:outline-none cursor-pointer"
+                    >
                       <option value="">Select Provider...</option>
                       {players.map(p => <option key={p.index} value={p.index}>{p.name}</option>)}
                     </select>
-                    <button onClick={() => { addStatLine('assists', selectedAssistant); setSelectedAssistant(''); }} className="px-3 bg-indigo-500 text-white rounded-lg text-xs font-bold cursor-pointer">Add</button>
+                    <button 
+                      onClick={() => { addStatLine('assists', selectedAssistant); setSelectedAssistant(''); }} 
+                      className="px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold tracking-wide shrink-0 transition-colors cursor-pointer"
+                    >
+                      Add
+                    </button>
                   </div>
-                  <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto mt-1">
                     {currentMatch.assists?.map((a, i) => (
-                      <div key={i} className="flex items-center justify-between bg-emerald-500/5 border border-emerald-500/10 px-2 py-1 rounded text-xs text-emerald-400">
+                      <div key={i} className="flex items-center justify-between bg-emerald-500/5 border border-emerald-500/10 px-2.5 py-1.5 rounded-lg text-xs text-emerald-400">
                         <span>👟 {a.name}</span>
                         <button onClick={() => removeStatLine('assists', i)} className="text-slate-500 hover:text-emerald-400 font-bold px-1 cursor-pointer">✕</button>
                       </div>
