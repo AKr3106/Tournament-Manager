@@ -50,7 +50,7 @@ const AdminLottery = () => {
   const [selectedSlotToLoad, setSelectedSlotToLoad] = useState("");
 
   // Fixed unchangeable max player assignment metric rules configuration
-  const MAX_PLAYERS_PER_TEAM = 6;
+  const MAX_PLAYERS_PER_TEAM = 5;
 
   // ─── Animation State ─────────────────────────────────────────────────────
   const [isRolling, setIsRolling] = useState(false);
@@ -95,7 +95,7 @@ const AdminLottery = () => {
         const stateData = await stateRes.json();
         if (stateData.success && stateData.state) {
           setLotteryState(stateData.state);
-          
+
           if (stateData.state.status !== "idle") {
             setSelectedPlayers(stateData.state.selectedPlayers || []);
             if (stateData.state.selectedTeams && stateData.state.selectedTeams.length > 0) {
@@ -241,8 +241,8 @@ const AdminLottery = () => {
       const data = await res.json();
       if (data.success) {
         setLotteryState(data.state);
-        setSelectedSlotToLoad(""); 
-        
+        setSelectedSlotToLoad("");
+
         const slotsRes = await fetch(`${API_BASE}/slots`, { credentials: "include" });
         const slotsData = await slotsRes.json();
         if (slotsData.success) {
@@ -313,7 +313,7 @@ const AdminLottery = () => {
         isRollingRef.current = false;
         setFadingOutId(null);
         setVisiblePool([]);
-        
+
         const slotsRes = await fetch(`${API_BASE}/slots`, { credentials: "include" });
         const slotsData = await slotsRes.json();
         if (slotsData.success) {
@@ -381,22 +381,21 @@ const AdminLottery = () => {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Local Switcher Block: Standardized Placement inside this view */}
       <div className="flex bg-slate-950/60 p-1 rounded-xl border border-white/5 max-w-xs mb-2">
-        <button 
-          type="button" 
-          disabled 
+        <button
+          type="button"
+          disabled
           className="flex-1 py-1.5 text-[11px] font-bold text-slate-600 bg-slate-900/20 border border-dashed border-white/5 rounded-lg cursor-not-allowed"
         >
           🔒 Season 1
         </button>
-        <button 
-          type="button" 
-          onClick={() => setSelectedSeason('s2')} 
-          className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition ${
-            selectedSeason === 's2' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400'
-          }`}
+        <button
+          type="button"
+          onClick={() => setSelectedSeason('s2')}
+          className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition ${selectedSeason === 's2' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400'
+            }`}
         >
           Season 2 (Live)
         </button>
@@ -405,7 +404,7 @@ const AdminLottery = () => {
       {/* ─── Control Bar ────────────────────────────────────────────────────── */}
       <div className="bg-slate-900/30 border border-white/10 rounded-2xl p-6 md:p-8 relative overflow-hidden">
         <div className="absolute -right-10 -top-10 w-40 h-40 bg-pink-500/5 rounded-full blur-3xl pointer-events-none"></div>
-        
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
             <div className="flex items-center gap-2">
@@ -494,7 +493,7 @@ const AdminLottery = () => {
       {lotteryState.status === "idle" && (
         <div className="bg-slate-900/20 border border-white/5 rounded-2xl p-6 md:p-8 space-y-6">
           <h3 className="text-lg font-bold text-white">Draft Pool Configuration</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Locked, Unchangeable Max Players layout container element card slot */}
             <div className="bg-slate-950/40 border border-white/5 rounded-xl p-5 space-y-3 select-none">
@@ -545,9 +544,8 @@ const AdminLottery = () => {
                         }
                       });
                     }}
-                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                      isSelected ? "bg-blue-500/10 border-blue-500/40 text-white" : "bg-slate-950/40 border-white/5 text-slate-400"
-                    }`}
+                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? "bg-blue-500/10 border-blue-500/40 text-white" : "bg-slate-950/40 border-white/5 text-slate-400"
+                      }`}
                   >
                     <span>{team.teamName || team['team-name']}</span>
                   </div>
@@ -588,9 +586,8 @@ const AdminLottery = () => {
                   <div
                     key={player.index}
                     onClick={() => handleTogglePlayer(player)}
-                    className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer ${
-                      isSelected ? "bg-indigo-500/10 border-indigo-500/40 text-white" : "bg-slate-950/40 border-white/5 text-slate-400"
-                    }`}
+                    className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer ${isSelected ? "bg-indigo-500/10 border-indigo-500/40 text-white" : "bg-slate-950/40 border-white/5 text-slate-400"
+                      }`}
                   >
                     <div className="min-w-0 flex-1 pr-1">
                       <p className="text-xs font-semibold truncate">{player.name}</p>
@@ -621,11 +618,10 @@ const AdminLottery = () => {
           </div>
           {/* Main display */}
           <div className="p-10 text-center">
-            <p className={`text-5xl md:text-6xl font-extrabold tracking-tight select-none transition-all ${
-              isRolling
+            <p className={`text-5xl md:text-6xl font-extrabold tracking-tight select-none transition-all ${isRolling
                 ? 'text-pink-300 blur-[2px] scale-110 duration-75'
                 : 'text-white scale-100 blur-0 duration-300'
-            }`}>
+              }`}>
               {rollingName}
             </p>
             {/* Reveal: team assignment after animation */}
@@ -668,11 +664,10 @@ const AdminLottery = () => {
             {visiblePool.map(player => (
               <div
                 key={player.index}
-                className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all duration-500 ${
-                  fadingOutId === player.index
+                className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all duration-500 ${fadingOutId === player.index
                     ? 'opacity-0 scale-90 bg-pink-500/10 border-pink-500/20'
                     : 'opacity-100 bg-slate-950/40 border-white/5 hover:border-white/10'
-                }`}
+                  }`}
               >
                 <span className="text-slate-300 font-medium truncate mr-1">{player.name}</span>
                 {posBadge(player.position)}
@@ -703,7 +698,7 @@ const AdminLottery = () => {
           })}
         </div>
       )}
-      
+
     </div>
   );
 };

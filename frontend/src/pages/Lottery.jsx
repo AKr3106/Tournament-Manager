@@ -224,7 +224,7 @@ const Lottery = () => {
               {[
                 { label: 'Pool Size', value: lotteryState.selectedPlayers?.length || 0, color: 'text-indigo-400' },
                 { label: 'Teams', value: teamsToDisplay.length, color: 'text-purple-400' },
-                { label: 'Per Team', value: lotteryState.playersPerTeam, color: 'text-pink-400' },
+                { label: 'Per Team', value: 5, color: 'text-pink-400' },
                 { label: 'Drafted', value: totalDrafted, color: 'text-emerald-400' },
               ].map((stat, i) => (
                 <div key={i} className="bg-slate-900/30 border border-white/5 rounded-xl p-4 text-center">
@@ -252,11 +252,10 @@ const Lottery = () => {
             </div>
             {/* Main display */}
             <div className="p-10 text-center">
-              <p className={`text-5xl md:text-6xl font-extrabold tracking-tight select-none transition-all ${
-                isRolling
+              <p className={`text-5xl md:text-6xl font-extrabold tracking-tight select-none transition-all ${isRolling
                   ? 'text-pink-300 blur-[2px] scale-110 duration-75'
                   : 'text-white scale-100 blur-0 duration-300'
-              }`}>
+                }`}>
                 {rollingName}
               </p>
               {/* Reveal: team assignment after animation */}
@@ -299,11 +298,10 @@ const Lottery = () => {
               {visiblePool.map(player => (
                 <div
                   key={player.index}
-                  className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all duration-500 ${
-                    fadingOutId === player.index
+                  className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all duration-500 ${fadingOutId === player.index
                       ? 'opacity-0 scale-90 bg-pink-500/10 border-pink-500/20'
                       : 'opacity-100 bg-slate-950/40 border-white/5 hover:border-white/10'
-                  }`}
+                    }`}
                 >
                   <span className="text-slate-300 font-medium truncate mr-1">{player.name}</span>
                   {posBadge(player.position)}
@@ -362,7 +360,7 @@ const Lottery = () => {
                             </div>
                           ))}
                           {/* Empty slots */}
-                          {Array.from({ length: Math.max(0, lotteryState.playersPerTeam - roster.length) }).map((_, i) => (
+                          {Array.from({ length: Math.max(0, 5 - roster.length) }).map((_, i) => (
                             <div key={`empty-${i}`} className="flex items-center justify-center bg-slate-950/20 p-2.5 rounded-xl border border-dashed border-white/5 text-xs text-slate-700 italic">
                               Awaiting draw...
                             </div>
