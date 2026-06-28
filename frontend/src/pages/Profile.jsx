@@ -163,7 +163,6 @@ const Profile = () => {
       const teamIdx = Math.floor(playerIdx / 5);
       if (teamIdx >= 0 && teamIdx < teams.length) {
         season1Team = teams[teamIdx]['team-name'];
-        // Grab the 5 chunked players belonging to this group
         const startChunk = teamIdx * 5;
         season1RosterPlayers = sortedPlayers.slice(startChunk, startChunk + 5);
       }
@@ -273,9 +272,13 @@ const Profile = () => {
               </div>
               <div>
                 <label className="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Player Name Link</label>
+                {/* Disabled state is removed so this input remains fully editable */}
                 <input
-                  type="text" required value={editPlayerName} onChange={(e) => setEditPlayerName(e.target.value)} disabled={!!currentUser?.playerName}
-                  className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none ${currentUser?.playerName ? 'bg-slate-950/40 border-white/5 text-slate-500 cursor-not-allowed' : 'bg-slate-950 border border-white/10 focus:border-indigo-500/50 text-slate-200'}`}
+                  type="text" 
+                  required 
+                  value={editPlayerName} 
+                  onChange={(e) => setEditPlayerName(e.target.value)}
+                  className="w-full bg-slate-950 border border-white/10 focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
                   placeholder="Enter Real Name"
                 />
               </div>
