@@ -5,7 +5,8 @@ import {
     startLottery,
     drawNextPlayer,
     resetLottery,
-    loadSlot
+    loadSlot,
+    completeLottery
 } from "../controllers/lottery.controller.js";
 import { protect, admin } from "../middleware/auth.middleware.js";
 
@@ -17,5 +18,6 @@ router.post("/start", protect, admin, startLottery);
 router.post("/draw", protect, admin, drawNextPlayer);
 router.post("/reset", protect, admin, resetLottery);
 router.post("/load-slot", protect, admin, loadSlot);
+router.post("/complete", protect, admin, completeLottery);
 
 export default router;

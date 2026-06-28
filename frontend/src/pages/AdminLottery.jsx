@@ -327,6 +327,24 @@ const AdminLottery = () => {
     }
   };
 
+  const handleCompleteDraft = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/lottery/complete`, {
+        method: "POST",
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLotteryState(data.state);
+        alert("Lottery marked as completed successfully!");
+      } else {
+        alert(data.message || "Failed to complete draft");
+      }
+    } catch (err) {
+      console.error("Error completing draft:", err);
+    }
+  };
+
   const filteredPlayersToSelect = allPlayers.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(playerSearchQuery.toLowerCase());
     const matchesPosition = filterPosition === "ALL" || p.position === filterPosition;
@@ -431,6 +449,15 @@ const AdminLottery = () => {
                   Load Slot
                 </button>
               </div>
+            )}
+
+            {lotteryState.status === "running" && visiblePool.length === 0 && !isRolling && (
+              <button
+                onClick={handleCompleteDraft}
+                className="bg-linear-to-r from-emerald-500 to-teal-600 text-white font-semibold text-sm rounded-xl px-5 py-2.5 hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 flex items-center gap-2 cursor-pointer"
+              >
+                🏆 Complete Draft
+              </button>
             )}
 
             {/* Draw Next — disabled while rolling, shows spinner + count */}

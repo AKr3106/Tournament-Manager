@@ -394,3 +394,23 @@ export const resetLottery = async (req, res) => {
         });
     }
 };
+
+// @desc    Complete lottery
+// @route   POST /api/lottery/complete
+// @access  Protected (Admin only)
+export const completeLottery = async (req, res) => {
+    try {
+        const state = await getOrCreateLottery();
+        state.status = "complete";
+        await state.save();
+
+        res.status(200).json({ success: true, state });
+    } catch (error) {
+        console.error("Error completing lottery:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to complete lottery",
+            error: error.message
+        });
+    }
+};
