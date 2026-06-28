@@ -236,14 +236,7 @@ export const updateProfile = async (req, res) => {
         }
 
         if (playerName !== undefined) {
-            if (!user.playerName || user.playerName === playerName.trim()) {
-                user.playerName = playerName.trim();
-            } else {
-                return res.status(400).json({
-                    success: false,
-                    message: "Player name cannot be changed once it has been set.",
-                });
-            }
+            user.playerName = playerName.trim();
         }
         if (phonenumber !== undefined) {
             user.phonenumber = phonenumber.trim();
