@@ -14,8 +14,16 @@ export default function MatchManager() {
     { id: 'Match 6', group: 'B', team1: 'Team F', team2: 'Team B', score1: '', score2: '', scorers: [], assists: [], motm: '' }
   ]);
 
+  const [sf1Match, setSf1Match] = useState({
+    id: 'Semifinal 1', team1: 'Group A Topper', team2: 'Group B Runner-up', score1: '', score2: '', scorers: [], assists: [], motm: ''
+  });
+
+  const [sf2Match, setSf2Match] = useState({
+    id: 'Semifinal 2', team1: 'Group B Topper', team2: 'Group A Runner-up', score1: '', score2: '', scorers: [], assists: [], motm: ''
+  });
+
   const [finalMatch, setFinalMatch] = useState({
-    id: 'Grand Final', team1: 'Group A Topper', team2: 'Group B Topper', score1: '', score2: '', scorers: [], assists: [], motm: ''
+    id: 'Grand Final', team1: 'SF1 Winner', team2: 'SF2 Winner', score1: '', score2: '', scorers: [], assists: [], motm: ''
   });
 
   const [goldenBallId, setGoldenBallId] = useState('');
@@ -40,6 +48,12 @@ export default function MatchManager() {
     const keyPrefix = `rkm_${selectedSeason}`;
     const savedFixtures = localStorage.getItem(`${keyPrefix}_fixtures`);
     if (savedFixtures) setFixtures(JSON.parse(savedFixtures));
+
+    const savedSf1 = localStorage.getItem(`${keyPrefix}_sf1Match`);
+    if (savedSf1) setSf1Match(JSON.parse(savedSf1));
+
+    const savedSf2 = localStorage.getItem(`${keyPrefix}_sf2Match`);
+    if (savedSf2) setSf2Match(JSON.parse(savedSf2));
 
     const savedFinal = localStorage.getItem(`${keyPrefix}_finalMatch`);
     if (savedFinal) setFinalMatch(JSON.parse(savedFinal));
@@ -96,21 +110,45 @@ export default function MatchManager() {
     };
 
     const list = Object.values(initialStats);
-    const topperA = list.filter(t => t.group === 'A').sort(sortTeams)[0]?.name || 'Group A Topper';
-    const topperB = list.filter(t => t.group === 'B').sort(sortTeams)[0]?.name || 'Group B Topper';
-    return { topperA, topperB };
+    const groupA = list.filter(t => t.group === 'A').sort(sortTeams);
+    const groupB = list.filter(t => t.group === 'B').sort(sortTeams);
+    
+    const topperA = groupA[0]?.name || 'Group A Topper';
+    const runnerA = groupA[1]?.name || 'Group A Runner-up';
+    const topperB = groupB[0]?.name || 'Group B Topper';
+    const runnerB = groupB[1]?.name || 'Group B Runner-up';
+    return { topperA, runnerA, topperB, runnerB };
   };
 
-  const { topperA, topperB } = getToppers();
-  const isSelectedFinal = selectedMatchIdx === 6;
+  const { topperA, runnerA, topperB, runnerB } = getToppers();
+
+  const isSf1Complete = sf1Match.score1 !== '' && sf1Match.score2 !== '';
+  const isSf2Complete = sf2Match.score1 !== '' && sf2Match.score2 !== '';
+
+  const getWinner = (match, t1, t2) => {
+    if (match.score1 === '' || match.score2 === '') return null;
+    const s1 = parseInt(match.score1, 10);
+    const s2 = parseInt(match.score2, 10);
+    return s1 > s2 ? t1 : t2;
+  };
+
+  const resolvedSf1Winner = getWinner(sf1Match, topperA, runnerB) || 'SF1 Winner';
+  const resolvedSf2Winner = getWinner(sf2Match, topperB, runnerA) || 'SF2 Winner';
+
+  const isSelectedSf1 = selectedMatchIdx === 6;
+  const isSelectedSf2 = selectedMatchIdx === 7;
+  const isSelectedFinal = selectedMatchIdx === 8;
   
-  const currentMatch = isSelectedFinal 
-    ? { ...finalMatch, team1: topperA, team2: topperB } 
+  const currentMatch = isSelectedSf1 ? { ...sf1Match, team1: topperA, team2: runnerB }
+    : isSelectedSf2 ? { ...sf2Match, team1: topperB, team2: runnerA }
+    : isSelectedFinal ? { ...finalMatch, team1: resolvedSf1Winner, team2: resolvedSf2Winner } 
     : { ...fixtures[selectedMatchIdx], team1: getFixtureTeams(selectedMatchIdx).team1, team2: getFixtureTeams(selectedMatchIdx).team2 };
 
-  const saveFixturesToSystem = (updatedFixtures = fixtures, updatedFinal = finalMatch) => {
+  const saveFixturesToSystem = (updatedFixtures = fixtures, updatedSf1 = sf1Match, updatedSf2 = sf2Match, updatedFinal = finalMatch) => {
     const keyPrefix = `rkm_${selectedSeason}`;
     localStorage.setItem(`${keyPrefix}_fixtures`, JSON.stringify(updatedFixtures));
+    localStorage.setItem(`${keyPrefix}_sf1Match`, JSON.stringify(updatedSf1));
+    localStorage.setItem(`${keyPrefix}_sf2Match`, JSON.stringify(updatedSf2));
     localStorage.setItem(`${keyPrefix}_finalMatch`, JSON.stringify(updatedFinal));
     
     window.dispatchEvent(new Event('storage'));
@@ -135,7 +173,11 @@ export default function MatchManager() {
 
   const updateMatchScore = (field, val) => {
     const numVal = val === '' ? '' : parseInt(val, 10);
-    if (isSelectedFinal) {
+    if (isSelectedSf1) {
+      setSf1Match(prev => ({ ...prev, [field]: numVal }));
+    } else if (isSelectedSf2) {
+      setSf2Match(prev => ({ ...prev, [field]: numVal }));
+    } else if (isSelectedFinal) {
       setFinalMatch(prev => ({ ...prev, [field]: numVal }));
     } else {
       const updated = [...fixtures];
@@ -149,7 +191,17 @@ export default function MatchManager() {
     const playerObj = players.find(p => p.index === parseInt(playerIndex, 10));
     if (!playerObj) return;
 
-    if (isSelectedFinal) {
+    if (isSelectedSf1) {
+      const updated = { ...sf1Match };
+      if (!updated[type]) updated[type] = [];
+      updated[type].push({ index: playerObj.index, name: playerObj.name });
+      setSf1Match(updated);
+    } else if (isSelectedSf2) {
+      const updated = { ...sf2Match };
+      if (!updated[type]) updated[type] = [];
+      updated[type].push({ index: playerObj.index, name: playerObj.name });
+      setSf2Match(updated);
+    } else if (isSelectedFinal) {
       const updated = { ...finalMatch };
       if (!updated[type]) updated[type] = [];
       updated[type].push({ index: playerObj.index, name: playerObj.name });
@@ -163,7 +215,15 @@ export default function MatchManager() {
   };
 
   const removeStatLine = (type, statItemIdx) => {
-    if (isSelectedFinal) {
+    if (isSelectedSf1) {
+      const updated = { ...sf1Match };
+      updated[type].splice(statItemIdx, 1);
+      setSf1Match(updated);
+    } else if (isSelectedSf2) {
+      const updated = { ...sf2Match };
+      updated[type].splice(statItemIdx, 1);
+      setSf2Match(updated);
+    } else if (isSelectedFinal) {
       const updated = { ...finalMatch };
       updated[type].splice(statItemIdx, 1);
       setFinalMatch(updated);
@@ -175,19 +235,27 @@ export default function MatchManager() {
   };
 
   const resetMatchStats = () => {
-    const matchName = isSelectedFinal ? 'Grand Final' : fixtures[selectedMatchIdx].id;
+    const matchName = currentMatch.id;
     const confirmReset = window.confirm(`Reset data for ${matchName}?`);
     if (!confirmReset) return;
 
-    if (isSelectedFinal) {
-      const clearedFinal = { id: 'Grand Final', team1: 'Group A Topper', team2: 'Group B Topper', score1: '', score2: '', scorers: [], assists: [], motm: '' };
-      setFinalMatch(clearedFinal);
-      saveFixturesToSystem(fixtures, clearedFinal);
+    if (isSelectedSf1) {
+      const cleared = { id: 'Semifinal 1', team1: 'Group A Topper', team2: 'Group B Runner-up', score1: '', score2: '', scorers: [], assists: [], motm: '' };
+      setSf1Match(cleared);
+      saveFixturesToSystem(fixtures, cleared, sf2Match, finalMatch);
+    } else if (isSelectedSf2) {
+      const cleared = { id: 'Semifinal 2', team1: 'Group B Topper', team2: 'Group A Runner-up', score1: '', score2: '', scorers: [], assists: [], motm: '' };
+      setSf2Match(cleared);
+      saveFixturesToSystem(fixtures, sf1Match, cleared, finalMatch);
+    } else if (isSelectedFinal) {
+      const cleared = { id: 'Grand Final', team1: 'SF1 Winner', team2: 'SF2 Winner', score1: '', score2: '', scorers: [], assists: [], motm: '' };
+      setFinalMatch(cleared);
+      saveFixturesToSystem(fixtures, sf1Match, sf2Match, cleared);
     } else {
       const updated = [...fixtures];
       updated[selectedMatchIdx] = { ...updated[selectedMatchIdx], score1: '', score2: '', scorers: [], assists: [], motm: '' };
       setFixtures(updated);
-      saveFixturesToSystem(updated, finalMatch);
+      saveFixturesToSystem(updated, sf1Match, sf2Match, finalMatch);
     }
     alert(`${matchName} records cleared.`);
   };
@@ -227,16 +295,40 @@ export default function MatchManager() {
             })}
 
             <label className="block text-xs text-slate-400 font-bold uppercase mt-6 mb-2">Playoffs Knockout</label>
-            <button
-              onClick={() => isGroupStageComplete && setSelectedMatchIdx(6)}
-              disabled={!isGroupStageComplete}
-              className={`w-full text-center p-3 rounded-xl border text-xs font-bold block transition cursor-pointer ${
-                !isGroupStageComplete ? 'opacity-40 bg-slate-950/20 border-dashed border-white/5 text-slate-600 cursor-not-allowed' :
-                selectedMatchIdx === 6 ? 'bg-amber-500 border-amber-400 text-slate-950 shadow-lg' : 'bg-linear-to-r from-indigo-900/40 to-purple-900/40 border-purple-500/20 text-purple-300'
-              }`}
-            >
-              🏆 {isGroupStageComplete ? 'Grand Final Active' : 'Finals (Locked)'}
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={() => isGroupStageComplete && setSelectedMatchIdx(6)}
+                disabled={!isGroupStageComplete}
+                className={`w-full text-center p-3 rounded-xl border text-xs font-bold block transition cursor-pointer ${
+                  !isGroupStageComplete ? 'opacity-40 bg-slate-950/20 border-dashed border-white/5 text-slate-600 cursor-not-allowed' :
+                  selectedMatchIdx === 6 ? 'bg-indigo-500 border-indigo-400 text-white shadow-lg' : 'bg-linear-to-r from-indigo-900/40 to-indigo-800/40 border-indigo-500/20 text-indigo-300'
+                }`}
+              >
+                SF1: 1A vs 2B {isGroupStageComplete ? '(Active)' : '(Locked)'}
+              </button>
+
+              <button
+                onClick={() => isGroupStageComplete && setSelectedMatchIdx(7)}
+                disabled={!isGroupStageComplete}
+                className={`w-full text-center p-3 rounded-xl border text-xs font-bold block transition cursor-pointer ${
+                  !isGroupStageComplete ? 'opacity-40 bg-slate-950/20 border-dashed border-white/5 text-slate-600 cursor-not-allowed' :
+                  selectedMatchIdx === 7 ? 'bg-indigo-500 border-indigo-400 text-white shadow-lg' : 'bg-linear-to-r from-indigo-900/40 to-indigo-800/40 border-indigo-500/20 text-indigo-300'
+                }`}
+              >
+                SF2: 1B vs 2A {isGroupStageComplete ? '(Active)' : '(Locked)'}
+              </button>
+
+              <button
+                onClick={() => isSf1Complete && isSf2Complete && setSelectedMatchIdx(8)}
+                disabled={!(isSf1Complete && isSf2Complete)}
+                className={`w-full text-center p-3 rounded-xl border text-xs font-bold block transition cursor-pointer ${
+                  !(isSf1Complete && isSf2Complete) ? 'opacity-40 bg-slate-950/20 border-dashed border-white/5 text-slate-600 cursor-not-allowed' :
+                  selectedMatchIdx === 8 ? 'bg-amber-500 border-amber-400 text-slate-950 shadow-lg' : 'bg-linear-to-r from-amber-900/40 to-orange-900/40 border-amber-500/20 text-amber-300'
+                }`}
+              >
+                🏆 Grand Final {(isSf1Complete && isSf2Complete) ? '(Active)' : '(Locked)'}
+              </button>
+            </div>
           </div>
 
           {/* Active Updating Workspace Card */}
@@ -336,7 +428,11 @@ export default function MatchManager() {
                 <select
                   value={currentMatch.motm || ''}
                   onChange={(e) => {
-                    if (isSelectedFinal) {
+                    if (isSelectedSf1) {
+                      setSf1Match(prev => ({ ...prev, motm: e.target.value }));
+                    } else if (isSelectedSf2) {
+                      setSf2Match(prev => ({ ...prev, motm: e.target.value }));
+                    } else if (isSelectedFinal) {
                       setFinalMatch(prev => ({ ...prev, motm: e.target.value }));
                     } else {
                       const updated = [...fixtures];

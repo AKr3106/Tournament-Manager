@@ -89,7 +89,23 @@ const Tournament = () => {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
-    return { id: 'Grand Final', team1: 'Group A Topper', team2: 'Group B Topper', score1: '', score2: '', scorers: [], assists: [], motm: '' };
+    return { id: 'Grand Final', team1: 'SF1 Winner', team2: 'SF2 Winner', score1: '', score2: '', scorers: [], assists: [], motm: '' };
+  });
+
+  const [sf1Match, setSf1Match] = useState(() => {
+    const saved = localStorage.getItem('rkm_s2_sf1Match');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return { id: 'Semifinal 1', team1: 'Group A Topper', team2: 'Group B Runner-up', score1: '', score2: '', scorers: [], assists: [], motm: '' };
+  });
+
+  const [sf2Match, setSf2Match] = useState(() => {
+    const saved = localStorage.getItem('rkm_s2_sf2Match');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return { id: 'Semifinal 2', team1: 'Group B Topper', team2: 'Group A Runner-up', score1: '', score2: '', scorers: [], assists: [], motm: '' };
   });
 
   const [goldenBallId] = useState(() => localStorage.getItem('rkm_s2_goldenBallId') || '');
@@ -100,6 +116,13 @@ const Tournament = () => {
     const handleStorageChange = () => {
       const savedFixtures = localStorage.getItem('rkm_s2_fixtures');
       if (savedFixtures) setFixtures(JSON.parse(savedFixtures));
+      
+      const savedSf1 = localStorage.getItem('rkm_s2_sf1Match');
+      if (savedSf1) setSf1Match(JSON.parse(savedSf1));
+      
+      const savedSf2 = localStorage.getItem('rkm_s2_sf2Match');
+      if (savedSf2) setSf2Match(JSON.parse(savedSf2));
+      
       const savedFinal = localStorage.getItem('rkm_s2_finalMatch');
       if (savedFinal) setFinalMatch(JSON.parse(savedFinal));
     };
@@ -167,7 +190,22 @@ const Tournament = () => {
   const { groupA, groupB } = calculateStandings();
   const isGroupStageComplete = fixtures.every(f => f.score1 !== '' && f.score2 !== '');
   const resolvedTopperA = groupA[0]?.name || 'Group A Topper';
+  const resolvedRunnerA = groupA[1]?.name || 'Group A Runner-up';
   const resolvedTopperB = groupB[0]?.name || 'Group B Topper';
+  const resolvedRunnerB = groupB[1]?.name || 'Group B Runner-up';
+
+  const isSf1Complete = sf1Match.score1 !== '' && sf1Match.score2 !== '';
+  const isSf2Complete = sf2Match.score1 !== '' && sf2Match.score2 !== '';
+
+  const getWinner = (match, t1, t2) => {
+    if (match.score1 === '' || match.score2 === '') return null;
+    const s1 = parseInt(match.score1, 10);
+    const s2 = parseInt(match.score2, 10);
+    return s1 > s2 ? t1 : t2;
+  };
+
+  const resolvedSf1Winner = getWinner(sf1Match, resolvedTopperA, resolvedRunnerB) || 'SF1 Winner';
+  const resolvedSf2Winner = getWinner(sf2Match, resolvedTopperB, resolvedRunnerA) || 'SF2 Winner';
 
   return (
     <div className="min-h-screen text-slate-50 pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -327,45 +365,98 @@ const Tournament = () => {
           })}
         </div>
 
-        {/* Grand Final Card Container[cite: 8] */}
-        <div className="mt-8 bg-linear-to-r from-indigo-950 to-purple-950 border border-purple-500/30 rounded-2xl p-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <h5 className="font-extrabold text-white text-base">Grand Final Match</h5>
-            </div>
-            
-            {!isGroupStageComplete ? (
-              <span className="px-4 py-2 bg-slate-900 border border-white/5 text-slate-500 text-xs font-bold rounded-xl tracking-wider">
-                Awaiting Finals
-              </span>
-            ) : (
-              <div className="flex items-center gap-4 text-xs sm:text-sm font-bold text-slate-200">
-                <span className="text-amber-400 uppercase tracking-wide">{resolvedTopperA}</span>
-                {finalMatch.score1 !== '' && finalMatch.score2 !== '' ? (
-                  <span className="text-base font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-1 rounded-xl font-mono">
-                    {finalMatch.score1} — {finalMatch.score2}
-                  </span>
+        {/* Playoffs Knockout Container */}
+        <div className="mt-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Semifinal 1 */}
+            <div className="bg-linear-to-r from-slate-900 to-indigo-950/30 border border-indigo-500/20 rounded-2xl p-5">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-3">
+                <h5 className="font-bold text-white text-sm">Semifinal 1</h5>
+                {!isGroupStageComplete ? (
+                  <span className="px-3 py-1 bg-slate-900 border border-white/5 text-slate-500 text-[10px] font-bold rounded-lg uppercase">Locked</span>
                 ) : (
-                  <span className="px-3 py-1 bg-purple-500 text-white rounded-lg text-xs font-black tracking-widest">VS</span>
+                  <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold rounded-lg uppercase">Active</span>
                 )}
-                <span className="text-amber-400 uppercase tracking-wide">{resolvedTopperB}</span>
+              </div>
+              <div className="flex flex-col gap-2 bg-slate-950/50 p-4 rounded-xl border border-white/5 text-sm font-semibold">
+                <div className="flex justify-between items-center text-slate-200">
+                  <span className="text-amber-400 text-xs">1A</span>
+                  <span>{resolvedTopperA}</span>
+                  <span className="font-mono bg-indigo-500/10 px-2 py-0.5 rounded text-indigo-400">{sf1Match.score1 !== '' ? sf1Match.score1 : '-'}</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-200">
+                  <span className="text-purple-400 text-xs">2B</span>
+                  <span>{resolvedRunnerB}</span>
+                  <span className="font-mono bg-indigo-500/10 px-2 py-0.5 rounded text-indigo-400">{sf1Match.score2 !== '' ? sf1Match.score2 : '-'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Semifinal 2 */}
+            <div className="bg-linear-to-r from-slate-900 to-indigo-950/30 border border-indigo-500/20 rounded-2xl p-5">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-3">
+                <h5 className="font-bold text-white text-sm">Semifinal 2</h5>
+                {!isGroupStageComplete ? (
+                  <span className="px-3 py-1 bg-slate-900 border border-white/5 text-slate-500 text-[10px] font-bold rounded-lg uppercase">Locked</span>
+                ) : (
+                  <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold rounded-lg uppercase">Active</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 bg-slate-950/50 p-4 rounded-xl border border-white/5 text-sm font-semibold">
+                <div className="flex justify-between items-center text-slate-200">
+                  <span className="text-purple-400 text-xs">1B</span>
+                  <span>{resolvedTopperB}</span>
+                  <span className="font-mono bg-indigo-500/10 px-2 py-0.5 rounded text-indigo-400">{sf2Match.score1 !== '' ? sf2Match.score1 : '-'}</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-200">
+                  <span className="text-amber-400 text-xs">2A</span>
+                  <span>{resolvedRunnerA}</span>
+                  <span className="font-mono bg-indigo-500/10 px-2 py-0.5 rounded text-indigo-400">{sf2Match.score2 !== '' ? sf2Match.score2 : '-'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Grand Final Card Container */}
+          <div className="bg-linear-to-r from-indigo-950 to-purple-950 border border-purple-500/30 rounded-2xl p-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h5 className="font-extrabold text-white text-base">Grand Final Match</h5>
+              </div>
+              
+              {!(isSf1Complete && isSf2Complete) ? (
+                <span className="px-4 py-2 bg-slate-900 border border-white/5 text-slate-500 text-xs font-bold rounded-xl tracking-wider">
+                  Awaiting Finals
+                </span>
+              ) : (
+                <div className="flex items-center gap-4 text-xs sm:text-sm font-bold text-slate-200">
+                  <span className="text-amber-400 uppercase tracking-wide">{resolvedSf1Winner}</span>
+                  {finalMatch.score1 !== '' && finalMatch.score2 !== '' ? (
+                    <span className="text-base font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-1 rounded-xl font-mono">
+                      {finalMatch.score1} — {finalMatch.score2}
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 bg-purple-500 text-white rounded-lg text-xs font-black tracking-widest">VS</span>
+                  )}
+                  <span className="text-amber-400 uppercase tracking-wide">{resolvedSf2Winner}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Render Stats info for Grand Final if complete */}
+            {(isSf1Complete && isSf2Complete) && (finalMatch.score1 !== '' || finalMatch.scorers?.length > 0) && (
+              <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-400">
+                <div>
+                  <span className="block font-bold text-slate-300 mb-1">⚽ Scorers:</span>
+                  {finalMatch.scorers?.map((s, i) => <span key={i} className="inline-block bg-white/5 rounded px-2 py-0.5 mr-1 mb-1">⚽ {s.name}</span>) || 'None'}
+                </div>
+                <div>
+                  <span className="block font-bold text-slate-300 mb-1">👟 Assists:</span>
+                  {finalMatch.assists?.map((a, i) => <span key={i} className="inline-block bg-white/5 rounded px-2 py-0.5 mr-1 mb-1">👟 {a.name}</span>) || 'None'}
+                </div>
               </div>
             )}
           </div>
-
-          {/* Render Stats info for Grand Final if complete[cite: 8] */}
-          {isGroupStageComplete && (finalMatch.score1 !== '' || finalMatch.scorers?.length > 0) && (
-            <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-400">
-              <div>
-                <span className="block font-bold text-slate-300 mb-1">⚽ Scorers:</span>
-                {finalMatch.scorers?.map((s, i) => <span key={i} className="inline-block bg-white/5 rounded px-2 py-0.5 mr-1 mb-1">⚽ {s.name}</span>) || 'None'}
-              </div>
-              <div>
-                <span className="block font-bold text-slate-300 mb-1">👟 Assists:</span>
-                {finalMatch.assists?.map((a, i) => <span key={i} className="inline-block bg-white/5 rounded px-2 py-0.5 mr-1 mb-1">👟 {a.name}</span>) || 'None'}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

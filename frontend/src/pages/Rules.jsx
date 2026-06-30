@@ -1,10 +1,11 @@
+import { useState, useEffect } from 'react';
 
 const Rules = () => {
   const matchRules = [
     {
       id: '01',
-      title: 'Reporting Time (4:00 PM)',
-      english: 'Everyone must arrive at the venue by 3:00 PM sharp. Please do not be late. No extra time or extensions will be provided.',
+      title: 'Reporting Time (5:00 PM)',
+      english: 'Everyone must arrive at the venue by 5:00 PM sharp. Please do not be late. No extra time or extensions will be provided.',
       icon: (
         <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -23,8 +24,8 @@ const Rules = () => {
     },
     {
       id: '03',
-      title: 'Match Duration (10+10 Mins)',
-      english: 'Matches will be 20 minutes total (two 10-minute halves). Absolutely no time-wasting or delay during the half-time transition.',
+      title: 'Match Duration (8+8 Mins)',
+      english: 'Matches will be 16 minutes total (two 8-minute halves). Absolutely no time-wasting or delay during the half-time transition.',
       icon: (
         <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -63,8 +64,18 @@ const Rules = () => {
     },
     {
       id: '07',
-      title: 'Tournament & Final Format',
-      english: 'Teams 1, 3, and 5 are placed in Group A, and teams 2, 4, and 6 in Group B. Group stages follow a round-robin format (1v3, 2v4, 3v5, 4v6, 5v1, 6v2). The Grand Final will be contested between the toppers (top-ranked teams) of Group A and Group B.',
+      title: 'Tournament: Group Stage',
+      english: 'Teams 1, 3, and 5 are placed in Group A, and teams 2, 4, and 6 in Group B. Group stages follow a round-robin format (1v3, 2v4, 3v5, 4v6, 5v1, 6v2).',
+      icon: (
+        <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        </svg>
+      )
+    },
+    {
+      id: '08',
+      title: 'Tournament: Knockout Stage',
+      english: 'The top 2 teams from each group qualify for the Playoffs. Semifinal 1 features Group A Topper vs Group B Runner-up, and Semifinal 2 features Group B Topper vs Group A Runner-up. The winners of both Semifinals advance to play the Grand Final match.',
       icon: (
         <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -132,7 +143,7 @@ const Rules = () => {
                 {rule.title}
               </h3>
               
-              {/* English Description */}
+              {/* Description */}
               <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
                 {rule.english}
               </p>
