@@ -10,8 +10,11 @@ A full-stack web application for managing the **RKM Legacy League** — a privat
 - 👤 **User Profiles** — Each user has a profile showing their linked player and team.
 - 🎲 **Live Lottery Draft** — Randomized player-to-team lottery system with real-time state tracking across sessions.
 - 🗓️ **Slot Manager** — Book and manage match/event slots.
-- 🏅 **Tournament Pages** — Dedicated pages for Season 1 (archived) and Season 2 (live).
-- 🛠️ **Admin Panel** — Full control over players (add, edit position, update stats), teams, lottery management, and slot management.
+- 🏅 **Tournament Pages** — Dedicated pages for Season 1 (archived) and Season 2 (live). Features a dynamic bracket, live group standings, and knockout rounds.
+- ⚽ **Match Stats & Events** — Detailed logging of Goalscorers, Assists, and Man of the Match (MOTM), displayed in collapsible fixture cards.
+- 🎯 **Penalty Shootouts** — Native tie-breaker support for knockout matches with automatic progression logic.
+- 🏆 **Champions Banner & Global Awards** — Dynamic declaration of tournament winners and tracking for the Golden Ball, Golden Boot, and Golden Gloves.
+- 🛠️ **Admin Panel & Match Manager** — Full control over players, teams, and lottery management. Includes a dedicated Match Manager workspace to log scores, stats, and awards.
 - 🌙 **Theme Toggle** — Dark/Night and Light/Day modes, persisted in `localStorage`.
 - 📱 **Fully Responsive** — Optimised for mobile, tablet, and desktop screens.
 
@@ -45,6 +48,8 @@ A full-stack web application for managing the **RKM Legacy League** — a privat
 ```
 Tournament-Manager/
 ├── backend/
+│   ├── scripts/
+│   │   └── migrate_players.js   # Database migration and utility scripts
 │   └── src/
 │       ├── app.js               # Express app setup, middleware, and routes
 │       ├── db/
