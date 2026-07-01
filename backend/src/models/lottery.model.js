@@ -10,7 +10,8 @@ const lotterySchema = new mongoose.Schema(
         },
         selectedPlayers: [
             {
-                type: mongoose.Schema.Types.Mixed,
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Player'
             }
         ],
         selectedTeams: [
@@ -24,21 +25,24 @@ const lotterySchema = new mongoose.Schema(
         },
         draftResults: {
             type: Map,
-            of: [mongoose.Schema.Types.Mixed],
+            of: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Player' }],
             default: {},
         },
         draftLog: [
             {
-                player: String,
+                player: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
                 team: String,
                 timestamp: { type: Date, default: Date.now }
             }
         ],
         currentPick: {
-            type: mongoose.Schema.Types.Mixed,
+            type: {
+                player: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+                team: mongoose.Schema.Types.Mixed
+            },
             default: null
         },
-        draftPool: [mongoose.Schema.Types.Mixed],
+        draftPool: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Player' }],
     },
     {
         timestamps: true,

@@ -14,7 +14,8 @@ const slotSchema = new mongoose.Schema(
         },
         players: [
             {
-                type: mongoose.Schema.Types.Mixed,
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Player'
             }
         ],
         status: {

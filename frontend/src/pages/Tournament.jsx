@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom';
 import TeamCard from '../components/TeamCard';
 import SeasonButton from '../components/SeasonButton';
-import PlayerCard from '../components/PlayerCard';
 import API_BASE from '../api';
 
 const Tournament = () => {
@@ -11,6 +10,12 @@ const Tournament = () => {
   const [draftResults, setDraftResults] = useState({});
   const [lotteryStatus, setLotteryStatus] = useState('idle');
   const [selectedTeams, setSelectedTeams] = useState([]);
+  const [expandedMatchId, setExpandedMatchId] = useState(null);
+
+  // Global Awards State
+  const [ballAward, setBallAward] = useState('');
+  const [bootAward, setBootAward] = useState('');
+  const [glovesAward, setGlovesAward] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,6 +45,11 @@ const Tournament = () => {
       }
     };
     fetchData();
+
+    // Initialize Global Awards Sync
+    setBallAward(localStorage.getItem('rkm_s2_goldenBallName') || '');
+    setBootAward(localStorage.getItem('rkm_s2_goldenBootName') || '');
+    setGlovesAward(localStorage.getItem('rkm_s2_goldenGlovesName') || '');
   }, []);
 
   const teamColorMap = [
@@ -75,12 +85,12 @@ const Tournament = () => {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
     return [
-      { id: 'Match 1', team1: 'Team A', team2: 'Team C', group: 'A', format: '1 v 3', score1: '', score2: '' },
-      { id: 'Match 2', team1: 'Team B', team2: 'Team D', group: 'B', format: '2 v 4', score1: '', score2: '' },
-      { id: 'Match 3', team1: 'Team C', team2: 'Team E', group: 'A', format: '3 v 5', score1: '', score2: '' },
-      { id: 'Match 4', team1: 'Team D', team2: 'Team F', group: 'B', format: '4 v 6', score1: '', score2: '' },
-      { id: 'Match 5', team1: 'Team E', team2: 'Team A', group: 'A', format: '5 v 1', score1: '', score2: '' },
-      { id: 'Match 6', team1: 'Team F', team2: 'Team B', group: 'B', format: '6 v 2', score1: '', score2: '' }
+      { id: 'Match 1', team1: 'Team A', team2: 'Team C', group: 'A', format: '1 v 3', score1: '', score2: '', goals: [], motm: '' },
+      { id: 'Match 2', team1: 'Team B', team2: 'Team D', group: 'B', format: '2 v 4', score1: '', score2: '', goals: [], motm: '' },
+      { id: 'Match 3', team1: 'Team C', team2: 'Team E', group: 'A', format: '3 v 5', score1: '', score2: '', goals: [], motm: '' },
+      { id: 'Match 4', team1: 'Team D', team2: 'Team F', group: 'B', format: '4 v 6', score1: '', score2: '', goals: [], motm: '' },
+      { id: 'Match 5', team1: 'Team E', team2: 'Team A', group: 'A', format: '5 v 1', score1: '', score2: '', goals: [], motm: '' },
+      { id: 'Match 6', team1: 'Team F', team2: 'Team B', group: 'B', format: '6 v 2', score1: '', score2: '', goals: [], motm: '' }
     ];
   });
 
@@ -89,7 +99,7 @@ const Tournament = () => {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
-    return { id: 'Grand Final', team1: 'SF1 Winner', team2: 'SF2 Winner', score1: '', score2: '', scorers: [], assists: [], motm: '' };
+    return { id: 'Grand Final', team1: 'SF1 Winner', team2: 'SF2 Winner', score1: '', score2: '', goals: [], motm: '' };
   });
 
   const [sf1Match, setSf1Match] = useState(() => {
@@ -97,7 +107,7 @@ const Tournament = () => {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
-    return { id: 'Semifinal 1', team1: 'Group A Topper', team2: 'Group B Runner-up', score1: '', score2: '', scorers: [], assists: [], motm: '' };
+    return { id: 'Semifinal 1', team1: 'Group A Topper', team2: 'Group B Runner-up', score1: '', score2: '', goals: [], motm: '' };
   });
 
   const [sf2Match, setSf2Match] = useState(() => {
@@ -105,12 +115,8 @@ const Tournament = () => {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
-    return { id: 'Semifinal 2', team1: 'Group B Topper', team2: 'Group A Runner-up', score1: '', score2: '', scorers: [], assists: [], motm: '' };
+    return { id: 'Semifinal 2', team1: 'Group B Topper', team2: 'Group A Runner-up', score1: '', score2: '', goals: [], motm: '' };
   });
-
-  const [goldenBallId] = useState(() => localStorage.getItem('rkm_s2_goldenBallId') || '');
-  const [goldenBootId] = useState(() => localStorage.getItem('rkm_s2_goldenBootId') || '');
-  const [goldenGlovesId] = useState(() => localStorage.getItem('rkm_s2_goldenGlovesId') || '');
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -125,6 +131,10 @@ const Tournament = () => {
       
       const savedFinal = localStorage.getItem('rkm_s2_finalMatch');
       if (savedFinal) setFinalMatch(JSON.parse(savedFinal));
+
+      setBallAward(localStorage.getItem('rkm_s2_goldenBallName') || '');
+      setBootAward(localStorage.getItem('rkm_s2_goldenBootName') || '');
+      setGlovesAward(localStorage.getItem('rkm_s2_goldenGlovesName') || '');
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
@@ -138,10 +148,6 @@ const Tournament = () => {
     }
     return { team1: `Team ${String.fromCharCode(65 + map[0])}`, team2: `Team ${String.fromCharCode(65 + map[1])}` };
   };
-
-  const goldenBallPlayer = players.find(p => p.index === parseInt(goldenBallId, 10));
-  const goldenBootPlayer = players.find(p => p.index === parseInt(goldenBootId, 10));
-  const goldenGlovesPlayer = players.find(p => p.index === parseInt(goldenGlovesId, 10));
 
   const teamBgColors = ['bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-indigo-500'];
 
@@ -189,6 +195,7 @@ const Tournament = () => {
 
   const { groupA, groupB } = calculateStandings();
   const isGroupStageComplete = fixtures.every(f => f.score1 !== '' && f.score2 !== '');
+  const hasGroupStageStarted = fixtures.some(f => f.score1 !== '' && f.score2 !== '' && f.score1 !== null && f.score2 !== null);
   const resolvedTopperA = groupA[0]?.name || 'Group A Topper';
   const resolvedRunnerA = groupA[1]?.name || 'Group A Runner-up';
   const resolvedTopperB = groupB[0]?.name || 'Group B Topper';
@@ -201,15 +208,72 @@ const Tournament = () => {
     if (match.score1 === '' || match.score2 === '') return null;
     const s1 = parseInt(match.score1, 10);
     const s2 = parseInt(match.score2, 10);
-    return s1 > s2 ? t1 : t2;
+    if (s1 > s2) return t1;
+    if (s1 < s2) return t2;
+    if (match.penaltyScore1 !== undefined && match.penaltyScore2 !== undefined && match.penaltyScore1 !== '' && match.penaltyScore2 !== '') {
+      const p1 = parseInt(match.penaltyScore1, 10);
+      const p2 = parseInt(match.penaltyScore2, 10);
+      if (p1 > p2) return t1;
+      if (p1 < p2) return t2;
+    }
+    return null;
   };
 
   const resolvedSf1Winner = getWinner(sf1Match, resolvedTopperA, resolvedRunnerB) || 'SF1 Winner';
   const resolvedSf2Winner = getWinner(sf2Match, resolvedTopperB, resolvedRunnerA) || 'SF2 Winner';
 
+  const renderStatsDropdown = (match, isPlayed) => {
+    if (!isPlayed) {
+      return (
+        <div className="text-center text-slate-400 text-xs py-2">
+          📊 Match stats will be available once the game is complete.
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 text-xs sm:text-sm">
+        <div className="bg-slate-950/50 border border-white/5 rounded-xl p-3 md:col-span-8">
+          <h5 className="font-bold text-slate-300 mb-2 flex items-center gap-2">
+            <span>⚽</span> Goals & Assists
+          </h5>
+          {match.goals && match.goals.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              {match.goals.map((g, i) => (
+                <div key={i} className="flex items-start gap-2.5 bg-white/5 px-3 py-2 rounded-lg border border-white/5 text-slate-300">
+                  <span className="text-[10px] mt-0.5">⚽</span> 
+                  <div className="flex flex-col">
+                    <strong className="text-white font-semibold text-xs sm:text-sm">{g.scorer}</strong>
+                    {g.assist && g.assist !== 'None' && (
+                      <span className="text-indigo-400 text-[11px] sm:text-xs font-medium mt-1 flex items-center gap-1">
+                        <span>👟</span> {g.assist}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-500 italic">No goals recorded</p>
+          )}
+        </div>
+
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex flex-col justify-center text-center md:col-span-4">
+          <h5 className="font-bold text-amber-500/70 mb-1 text-[10px] uppercase tracking-widest">Man of the Match</h5>
+          {match.motm ? (
+            <div className="text-amber-400 font-bold flex items-center justify-center gap-2 text-sm">
+               {match.motm}
+            </div>
+          ) : (
+            <p className="text-amber-500/40 italic">Not assigned yet</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen text-slate-50 pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* Header Container Layout */}
       <div className="text-center md:text-left mb-12">
         <span className="text-indigo-400 font-semibold tracking-wider text-sm uppercase">RKM LEGACY LEAGUE Season 2</span>
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mt-2">
@@ -221,7 +285,7 @@ const Tournament = () => {
 
       <SeasonButton activeSeason="s2" />
 
-      {/* 📊 Stats / Highlight Grid Panel Block[cite: 8] */}
+      {/* Highlights Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
         <div className="relative group overflow-hidden rounded-2xl bg-slate-900/50 border border-white/10 p-8 hover:border-indigo-500/50 transition-all duration-300">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/10 rounded-full group-hover:scale-125 transition-transform duration-500"></div>
@@ -257,7 +321,7 @@ const Tournament = () => {
         </div>
       </div>
 
-      {/* Team Rosters Header & Live Navigation Connector */}
+      {/* Team Rosters Header */}
       <div className="mb-12">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-white/5 pb-3 mb-6">
           <h4 className="font-bold text-lg text-white">Participating Teams</h4>
@@ -265,76 +329,58 @@ const Tournament = () => {
             to="/lottery"
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-linear-to-r from-pink-500 via-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 uppercase tracking-wider"
           >
-            <svg className="w-4 h-4 animate-spin" style={{ animationDuration: '3s' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.774 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
             Go to Live Lottery Draft
           </Link>
         </div>
         <TeamCard teams={teams} />
       </div>
 
-      {/* Standings Tables[cite: 8] */}
+      {/* Standings Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        {/* Group A Table */}
         <div className="rounded-2xl bg-slate-900/30 border border-white/10 p-6 shadow-xl backdrop-blur-md">
           <h4 className="font-extrabold text-xl text-indigo-400 mb-4">GROUP A</h4>
           <table className="w-full text-left text-xs sm:text-sm font-mono">
             <thead>
               <tr className="border-b border-white/5 text-slate-400 font-semibold font-sans">
-                <th className="py-2 px-2 text-center w-8">Pos</th><th>Team</th><th className="py-2 text-center w-8">P</th><th className="py-2 text-center w-10">GD</th><th className="py-2 text-center w-10 text-indigo-400">Pts</th>
+                <th className="py-2 px-2 text-center w-8">Pos</th><th>Team</th><th className="py-2 text-center w-8">P</th><th className="py-2 w-10 text-right">GD</th><th className="py-2 w-10 text-indigo-400 text-right">Pts</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {groupA.map((team, idx) => (
                 <tr key={team.name} className={`hover:bg-white/5 ${idx === 0 ? 'bg-indigo-500/5' : ''}`}>
                   <td className="py-3 px-2 text-center font-bold">
-                    {/* Wrapped inside a flex layout container to keep position indicator elements aligned side-by-side cleanly */}
-                    {idx === 0 ? (
-                      <div className="flex items-center justify-center gap-1 whitespace-nowrap">
-                        <span>1</span>
-                        <span>🏆</span>
-                      </div>
-                    ) : (
-                      idx + 1
-                    )}
+                    {idx === 0 ? <div className="flex items-center justify-center gap-1 whitespace-nowrap"><span>1</span><span>🏆</span></div> : idx + 1}
                   </td>
                   <td className="py-3 px-2 font-semibold font-sans">{team.name}</td>
                   <td className="py-3 text-center">{team.played}</td>
-                  <td className="py-3 text-center">{team.goalDifference}</td>
-                  <td className="py-3 text-center font-bold text-indigo-400">{team.points}</td>
+                  <td className="py-3 text-right">{team.goalDifference}</td>
+                  <td className="py-3 text-right font-bold text-indigo-400">{team.points}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
+        {/* Group B Table */}
         <div className="rounded-2xl bg-slate-900/30 border border-white/10 p-6 shadow-xl backdrop-blur-md">
           <h4 className="font-extrabold text-xl text-purple-400 mb-4">GROUP B</h4>
           <table className="w-full text-left text-xs sm:text-sm font-mono">
             <thead>
               <tr className="border-b border-white/5 text-slate-400 font-semibold font-sans">
-                <th className="py-2 px-2 text-center w-8">Pos</th><th>Team</th><th className="py-2 text-center w-8">P</th><th className="py-2 text-center w-10">GD</th><th className="py-2 text-center w-10 text-purple-400">Pts</th>
+                <th className="py-2 px-2 text-center w-8">Pos</th><th>Team</th><th className="py-2 text-center w-8">P</th><th className="py-2 text-center w-10 ">GD</th><th className="py-2 w-10 text-purple-400 text-right">Pts</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {groupB.map((team, idx) => (
                 <tr key={team.name} className={`hover:bg-white/5 ${idx === 0 ? 'bg-purple-500/5' : ''}`}>
                   <td className="py-3 px-2 text-center font-bold">
-                    {/* Wrapped inside a flex layout container to keep position indicator elements aligned side-by-side cleanly */}
-                    {idx === 0 ? (
-                      <div className="flex items-center justify-center gap-1 whitespace-nowrap">
-                        <span>1</span>
-                        <span>🏆</span>
-                      </div>
-                    ) : (
-                      idx + 1
-                    )}
+                    {idx === 0 ? <div className="flex items-center justify-center gap-1 whitespace-nowrap"><span>1</span><span>🏆</span></div> : idx + 1}
                   </td>
                   <td className="py-3 px-2 font-semibold font-sans">{team.name}</td>
                   <td className="py-3 text-center">{team.played}</td>
-                  <td className="py-3 text-center">{team.goalDifference}</td>
-                  <td className="py-3 text-center font-bold text-purple-400">{team.points}</td>
+                  <td className="py-3 text-right">{team.goalDifference}</td>
+                  <td className="py-3 text-right font-bold text-purple-400">{team.points}</td>
                 </tr>
               ))}
             </tbody>
@@ -342,123 +388,264 @@ const Tournament = () => {
         </div>
       </div>
 
-      {/* Fixtures Timeline Section[cite: 8] */}
-      <div className="bg-slate-900/20 border border-white/10 rounded-3xl p-6 md:p-8 mb-12">
+      {/* Fixtures Timeline Section */}
+      <div className="bg-slate-900/20 border border-white/10 rounded-3xl p-2 sm:p-6 md:p-8 mb-12">
         <h4 className="font-bold text-lg text-white border-b border-white/5 pb-3 mb-6">Fixture Schedule</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Shifted outer grid wrapper to lg:grid-cols-2 to render single file on tablet sizes verbatim[cite: 7] */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {fixtures.map((fixture, index) => {
             const { team1: displayTeam1, team2: displayTeam2 } = getFixtureTeams(index);
+            const isExpanded = expandedMatchId === fixture.id;
+            const isPlayed = fixture.score1 !== '' && fixture.score2 !== '';
+
             return (
-              <div key={index} className="flex items-center justify-between bg-slate-950/60 border border-white/5 rounded-2xl p-4">
-                <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">{fixture.id}</span>
-                <div className="flex items-center gap-3 font-semibold text-xs sm:text-sm text-slate-200">
-                  <span>{displayTeam1}</span>
-                  {fixture.score1 !== '' && fixture.score2 !== '' ? (
-                    <span className="text-sm font-extrabold text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded font-mono">{fixture.score1} — {fixture.score2}</span>
-                  ) : (
-                    <span className="text-[10px] text-indigo-400 bg-indigo-500/5 border border-indigo-500/10 px-1.5 py-0.5 rounded font-bold">VS</span>
-                  )}
-                  <span>{displayTeam2}</span>
+              <div key={index} className="flex flex-col bg-slate-950/60 border border-white/5 rounded-2xl overflow-hidden self-start w-full">
+                {/* Mobile View Badge Left of Box */}
+                <div className="sm:hidden px-3 pt-2.5 flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">
+                    {fixture.shortId || fixture.id.replace('Match ', 'M')}
+                  </span>
+                  <div 
+                    onClick={() => setExpandedMatchId(isExpanded ? null : fixture.id)}
+                    className="text-slate-400 p-1"
+                  >
+                    <svg className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
+
+                <div 
+                  className="flex items-center justify-between p-3 sm:p-4 cursor-pointer hover:bg-white/5 transition-colors w-full gap-2 sm:gap-4"
+                  onClick={() => setExpandedMatchId(isExpanded ? null : fixture.id)}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    {/* Desktop/Tablet Badge Remains Inside */}
+                    <span className="hidden sm:inline-block shrink-0 text-center whitespace-nowrap text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                      {fixture.shortId || fixture.id.replace('Match ', 'M')}
+                    </span>
+                    
+                    <div className="flex items-center font-semibold text-xs sm:text-sm text-slate-200 flex-1 min-w-0 gap-1 sm:gap-3">
+                      <span className="flex-1 text-right wrap-break-words whitespace-normal">{displayTeam1}</span>
+                      <div className="shrink-0 mx-0.5 sm:mx-1">
+                        {isPlayed ? (
+                          <span className="text-[11px] sm:text-sm font-extrabold text-indigo-400 bg-indigo-500/10 px-1.5 sm:px-2.5 py-0.5 rounded font-mono whitespace-nowrap">{fixture.score1} — {fixture.score2}</span>
+                        ) : (
+                          <span className="text-[10px] text-indigo-400 bg-indigo-500/5 border border-indigo-500/10 px-1.5 py-0.5 rounded font-bold whitespace-nowrap">VS</span>
+                        )}
+                      </div>
+                      <span className="flex-1 text-left wrap-break-words whitespace-normal">{displayTeam2}</span>
+                    </div>
+                  </div>
+
+                  <div className="hidden sm:block text-slate-400 shrink-0">
+                    <svg className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="p-3 sm:p-4 border-t border-white/5 bg-slate-900/50 transition-all">
+                    {renderStatsDropdown(fixture, isPlayed)}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
 
-        {/* Playoffs Knockout Container */}
-        <div className="mt-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Semifinal 1 */}
-            <div className="bg-linear-to-r from-slate-900 to-indigo-950/30 border border-indigo-500/20 rounded-2xl p-5">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-3">
-                <h5 className="font-bold text-white text-sm">Semifinal 1</h5>
-                {!isGroupStageComplete ? (
-                  <span className="px-3 py-1 bg-slate-900 border border-white/5 text-slate-500 text-[10px] font-bold rounded-lg uppercase">Locked</span>
-                ) : (
-                  <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold rounded-lg uppercase">Active</span>
-                )}
-              </div>
-              <div className="flex flex-col gap-2 bg-slate-950/50 p-4 rounded-xl border border-white/5 text-sm font-semibold">
-                <div className="flex justify-between items-center text-slate-200">
-                  <span className="text-amber-400 text-xs">1A</span>
-                  <span>{resolvedTopperA}</span>
-                  <span className="font-mono bg-indigo-500/10 px-2 py-0.5 rounded text-indigo-400">{sf1Match.score1 !== '' ? sf1Match.score1 : '-'}</span>
-                </div>
-                <div className="flex justify-between items-center text-slate-200">
-                  <span className="text-purple-400 text-xs">2B</span>
-                  <span>{resolvedRunnerB}</span>
-                  <span className="font-mono bg-indigo-500/10 px-2 py-0.5 rounded text-indigo-400">{sf1Match.score2 !== '' ? sf1Match.score2 : '-'}</span>
+        {/* Playoffs Knockout Containers */}
+        <div className="mt-8 space-y-4">
+          {/* Shifted outer grid wrapper to lg:grid-cols-2 to render single file on tablet sizes verbatim[cite: 7] */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Semifinal 1 Accordion Row */}
+            <div className="flex flex-col bg-slate-950/60 border border-indigo-500/20 rounded-2xl overflow-hidden self-start w-full">
+              {/* Mobile View Badge Left of Box */}
+              <div className="sm:hidden px-3 pt-2.5 flex justify-between items-center">
+                <span className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">SF 1</span>
+                <div 
+                  onClick={() => setExpandedMatchId(expandedMatchId === 'sf1' ? null : 'sf1')}
+                  className="text-slate-400 p-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform duration-300 ${expandedMatchId === 'sf1' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </div>
               </div>
-            </div>
 
-            {/* Semifinal 2 */}
-            <div className="bg-linear-to-r from-slate-900 to-indigo-950/30 border border-indigo-500/20 rounded-2xl p-5">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-3">
-                <h5 className="font-bold text-white text-sm">Semifinal 2</h5>
-                {!isGroupStageComplete ? (
-                  <span className="px-3 py-1 bg-slate-900 border border-white/5 text-slate-500 text-[10px] font-bold rounded-lg uppercase">Locked</span>
-                ) : (
-                  <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold rounded-lg uppercase">Active</span>
-                )}
-              </div>
-              <div className="flex flex-col gap-2 bg-slate-950/50 p-4 rounded-xl border border-white/5 text-sm font-semibold">
-                <div className="flex justify-between items-center text-slate-200">
-                  <span className="text-purple-400 text-xs">1B</span>
-                  <span>{resolvedTopperB}</span>
-                  <span className="font-mono bg-indigo-500/10 px-2 py-0.5 rounded text-indigo-400">{sf2Match.score1 !== '' ? sf2Match.score1 : '-'}</span>
+              <div 
+                className="flex items-center justify-between p-3 sm:p-4 cursor-pointer hover:bg-white/5 transition-colors w-full gap-2 sm:gap-4"
+                onClick={() => setExpandedMatchId(expandedMatchId === 'sf1' ? null : 'sf1')}
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="hidden sm:block shrink-0">
+                    <span className="text-xs font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">SF 1</span>
+                  </div>
+                  
+                  <div className="flex items-center font-semibold text-xs sm:text-sm text-slate-200 flex-1 min-w-0 gap-1 sm:gap-3">
+                    <span className="flex-1 text-right wrap-break-words whitespace-normal">{hasGroupStageStarted ? resolvedTopperA : "1A"}</span>
+                    <div className="shrink-0 mx-0.5 sm:mx-1">
+                      <span className="font-mono bg-indigo-500/10 px-1.5 sm:px-2 py-0.5 rounded text-indigo-400 text-[11px] sm:text-xs whitespace-nowrap flex flex-col sm:flex-row items-center gap-0.5">
+                        <span>{sf1Match.score1 !== '' ? `${sf1Match.score1} — ${sf1Match.score2}` : 'VS'}</span>
+                        {sf1Match.score1 !== '' && sf1Match.penaltyScore1 !== undefined && sf1Match.penaltyScore2 !== undefined && sf1Match.penaltyScore1 !== '' && sf1Match.penaltyScore2 !== '' && (
+                          <span className="text-[9px] sm:text-[10px] text-purple-300 sm:ml-1">({sf1Match.penaltyScore1}-{sf1Match.penaltyScore2} P)</span>
+                        )}
+                      </span>
+                    </div>
+                    <span className="flex-1 text-left wrap-break-words whitespace-normal">{hasGroupStageStarted ? resolvedRunnerB : "2B"}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center text-slate-200">
-                  <span className="text-amber-400 text-xs">2A</span>
-                  <span>{resolvedRunnerA}</span>
-                  <span className="font-mono bg-indigo-500/10 px-2 py-0.5 rounded text-indigo-400">{sf2Match.score2 !== '' ? sf2Match.score2 : '-'}</span>
-                </div>
+                
+                <svg className={`hidden sm:block w-5 h-5 shrink-0 text-slate-400 transition-transform ${expandedMatchId === 'sf1' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
-            </div>
-          </div>
-
-          {/* Grand Final Card Container */}
-          <div className="bg-linear-to-r from-indigo-950 to-purple-950 border border-purple-500/30 rounded-2xl p-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <h5 className="font-extrabold text-white text-base">Grand Final Match</h5>
-              </div>
-              
-              {!(isSf1Complete && isSf2Complete) ? (
-                <span className="px-4 py-2 bg-slate-900 border border-white/5 text-slate-500 text-xs font-bold rounded-xl tracking-wider">
-                  Awaiting Finals
-                </span>
-              ) : (
-                <div className="flex items-center gap-4 text-xs sm:text-sm font-bold text-slate-200">
-                  <span className="text-amber-400 uppercase tracking-wide">{resolvedSf1Winner}</span>
-                  {finalMatch.score1 !== '' && finalMatch.score2 !== '' ? (
-                    <span className="text-base font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-1 rounded-xl font-mono">
-                      {finalMatch.score1} — {finalMatch.score2}
-                    </span>
-                  ) : (
-                    <span className="px-3 py-1 bg-purple-500 text-white rounded-lg text-xs font-black tracking-widest">VS</span>
-                  )}
-                  <span className="text-amber-400 uppercase tracking-wide">{resolvedSf2Winner}</span>
+              {expandedMatchId === 'sf1' && (
+                <div className="p-3 sm:p-4 border-t border-white/5 bg-slate-900/50">
+                  {renderStatsDropdown(sf1Match, isSf1Complete)}
                 </div>
               )}
             </div>
 
-            {/* Render Stats info for Grand Final if complete */}
-            {(isSf1Complete && isSf2Complete) && (finalMatch.score1 !== '' || finalMatch.scorers?.length > 0) && (
-              <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-400">
-                <div>
-                  <span className="block font-bold text-slate-300 mb-1">⚽ Scorers:</span>
-                  {finalMatch.scorers?.map((s, i) => <span key={i} className="inline-block bg-white/5 rounded px-2 py-0.5 mr-1 mb-1">⚽ {s.name}</span>) || 'None'}
+            {/* Semifinal 2 Accordion Row */}
+            <div className="flex flex-col bg-slate-950/60 border border-indigo-500/20 rounded-2xl overflow-hidden self-start w-full">
+              {/* Mobile View Badge Left of Box */}
+              <div className="sm:hidden px-3 pt-2.5 flex justify-between items-center">
+                <span className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">SF 2</span>
+                <div 
+                  onClick={() => setExpandedMatchId(expandedMatchId === 'sf2' ? null : 'sf2')}
+                  className="text-slate-400 p-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform duration-300 ${expandedMatchId === 'sf2' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </div>
-                <div>
-                  <span className="block font-bold text-slate-300 mb-1">👟 Assists:</span>
-                  {finalMatch.assists?.map((a, i) => <span key={i} className="inline-block bg-white/5 rounded px-2 py-0.5 mr-1 mb-1">👟 {a.name}</span>) || 'None'}
+              </div>
+
+              <div 
+                className="flex items-center justify-between p-3 sm:p-4 cursor-pointer hover:bg-white/5 transition-colors w-full gap-2 sm:gap-4"
+                onClick={() => setExpandedMatchId(expandedMatchId === 'sf2' ? null : 'sf2')}
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="hidden sm:block shrink-0">
+                    <span className="text-xs font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">SF 2</span>
+                  </div>
+                  
+                  <div className="flex items-center font-semibold text-xs sm:text-sm text-slate-200 flex-1 min-w-0 gap-1 sm:gap-3">
+                    <span className="flex-1 text-right wrap-reak-words whitespace-normal">{hasGroupStageStarted ? resolvedTopperB : "1B"}</span>
+                    <div className="shrink-0 mx-0.5 sm:mx-1">
+                      <span className="font-mono bg-indigo-500/10 px-1.5 sm:px-2 py-0.5 rounded text-indigo-400 text-[11px] sm:text-xs whitespace-nowrap flex flex-col sm:flex-row items-center gap-0.5">
+                        <span>{sf2Match.score1 !== '' ? `${sf2Match.score1} — ${sf2Match.score2}` : 'VS'}</span>
+                        {sf2Match.score1 !== '' && sf2Match.penaltyScore1 !== undefined && sf2Match.penaltyScore2 !== undefined && sf2Match.penaltyScore1 !== '' && sf2Match.penaltyScore2 !== '' && (
+                          <span className="text-[9px] sm:text-[10px] text-purple-300 sm:ml-1">({sf2Match.penaltyScore1}-{sf2Match.penaltyScore2} P)</span>
+                        )}
+                      </span>
+                    </div>
+                    <span className="flex-1 text-left wrap-break-words whitespace-normal">{hasGroupStageStarted ? resolvedRunnerA : "2A"}</span>
+                  </div>
                 </div>
+                
+                <svg className={`hidden sm:block w-5 h-5 shrink-0 text-slate-400 transition-transform ${expandedMatchId === 'sf2' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              {expandedMatchId === 'sf2' && (
+                <div className="p-3 sm:p-4 border-t border-white/5 bg-slate-900/50">
+                  {renderStatsDropdown(sf2Match, isSf2Complete)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Grand Final Accordion Container */}
+          <div className="flex flex-col bg-linear-to-r from-indigo-950 to-purple-950 border border-purple-500/30 rounded-2xl overflow-hidden w-full">
+            {/* Mobile View Badge Left of Box */}
+            <div className="sm:hidden px-3 pt-2.5 flex justify-between items-center">
+              <span className="text-[10px] font-extrabold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 tracking-wider whitespace-nowrap">FINAL</span>
+              <div 
+                onClick={() => setExpandedMatchId(expandedMatchId === 'final' ? null : 'final')}
+                className="text-slate-400 p-1"
+              >
+                <svg className={`w-4 h-4 transition-transform duration-300 ${expandedMatchId === 'final' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            <div 
+              className="flex items-center justify-between p-3 sm:p-4 cursor-pointer hover:bg-white/5 transition-colors w-full gap-2 sm:gap-4"
+              onClick={() => setExpandedMatchId(expandedMatchId === 'final' ? null : 'final')}
+            >
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="hidden sm:block shrink-0">
+                  <span className="text-xs font-extrabold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/20 tracking-wider whitespace-nowrap">FINAL</span>
+                </div>
+                
+                <div className="flex items-center font-bold text-xs sm:text-sm text-slate-200 flex-1 min-w-0 gap-1 sm:gap-3">
+                  <span className="flex-1 text-right wrap-break-words whitespace-normal">{resolvedSf1Winner}</span>
+                  <div className="shrink-0 mx-0.5 sm:mx-1">
+                    <span className="font-mono bg-purple-500/20 border border-purple-500/30 px-2 sm:px-3 py-0.5 rounded text-purple-300 text-xs sm:text-sm whitespace-nowrap flex flex-col sm:flex-row items-center gap-0.5">
+                      <span>{finalMatch.score1 !== '' && finalMatch.score2 !== '' ? `${finalMatch.score1} — ${finalMatch.score2}` : 'VS'}</span>
+                      {finalMatch.score1 !== '' && finalMatch.penaltyScore1 !== undefined && finalMatch.penaltyScore2 !== undefined && finalMatch.penaltyScore1 !== '' && finalMatch.penaltyScore2 !== '' && (
+                        <span className="text-[9px] sm:text-[10px] text-amber-300 sm:ml-1">({finalMatch.penaltyScore1}-{finalMatch.penaltyScore2} P)</span>
+                      )}
+                    </span>
+                  </div>
+                  <span className="flex-1 text-left wrap-break-words whitespace-normal">{resolvedSf2Winner}</span>
+                </div>
+              </div>
+              
+              <svg className={`hidden sm:block w-5 h-5 shrink-0 text-slate-400 transition-transform ${expandedMatchId === 'final' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            {expandedMatchId === 'final' && (
+              <div className="p-3 sm:p-4 border-t border-white/10 bg-slate-950/40">
+                {renderStatsDropdown(finalMatch, isSf1Complete && isSf2Complete && finalMatch.score1 !== '')}
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Champions Banner */}
+      {finalMatch.score1 !== '' && getWinner(finalMatch, resolvedSf1Winner, resolvedSf2Winner) && (
+        <div className="bg-linear-to-r from-amber-500/20 via-yellow-600/10 to-amber-500/20 border border-amber-500/30 rounded-3xl p-6 sm:p-8 text-center shadow-2xl shadow-amber-500/10 mb-8 mt-12 animate-fade-in mx-auto max-w-3xl">
+          <div className="text-4xl sm:text-5xl mb-3 animate-bounce">🏆</div>
+          <div className="text-amber-500 font-bold text-xs tracking-widest uppercase mb-2">RKM LEGACY LEAGUE SEASON 2 CHAMPIONS</div>
+          <div className="text-2xl sm:text-3xl md:text-5xl font-black bg-clip-text text-transparent bg-linear-to-r from-yellow-200 via-amber-400 to-yellow-100 drop-shadow-md uppercase tracking-wide whitespace-normal px-2">
+            {getWinner(finalMatch, resolvedSf1Winner, resolvedSf2Winner)}
+          </div>
+        </div>
+      )}
+
+      {/* Tournament-Wide Awards Display Box */}
+      {(ballAward || bootAward || glovesAward) && (
+        <div className="mt-12 bg-slate-900/30 border border-white/10 rounded-3xl p-4 sm:p-6 md:p-8 relative overflow-hidden backdrop-blur-md">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+          <h4 className="font-extrabold text-xl text-white mb-6 tracking-wide border-b border-white/5 pb-3">
+            🏆 Tournament Trophies & Awards
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-slate-950/50 border border-amber-500/10 rounded-2xl p-4 sm:p-5 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl sm:text-3xl mb-2">🏆</span>
+              <span className="text-[10px] font-bold text-amber-500 tracking-widest uppercase">Golden Ball (MVP)</span>
+              <span className="text-sm sm:text-base font-extrabold text-white mt-2 whitespace-normal max-w-full">{ballAward || 'Not Awarded'}</span>
+            </div>
+            <div className="bg-slate-950/50 border border-orange-500/10 rounded-2xl p-4 sm:p-5 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl sm:text-3xl mb-2">🔥</span>
+              <span className="text-[10px] font-bold text-orange-500 tracking-widest uppercase">Golden Boot (Top Scorer)</span>
+              <span className="text-sm sm:text-base font-extrabold text-white mt-2 whitespace-normal max-w-full">{bootAward || 'Not Awarded'}</span>
+            </div>
+            <div className="bg-slate-950/50 border border-purple-500/10 rounded-2xl p-4 sm:p-5 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl sm:text-3xl mb-2">🧤</span>
+              <span className="text-[10px] font-bold text-purple-400 tracking-widest uppercase">Golden Gloves (Best GK)</span>
+              <span className="text-sm sm:text-base font-extrabold text-white mt-2 whitespace-normal max-w-full">{glovesAward || 'Not Awarded'}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

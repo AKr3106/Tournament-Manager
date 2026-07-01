@@ -14,16 +14,6 @@ const Rules = () => {
     },
     {
       id: '02',
-      title: 'Water & Hydration',
-      english: 'Everyone must carry their own water bottle. Water will be available at the venue but it must be purchased.',
-      icon: (
-        <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14v4m0 0L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-      )
-    },
-    {
-      id: '03',
       title: 'Match Duration (8+8 Mins)',
       english: 'Matches will be 16 minutes total (two 8-minute halves). Absolutely no time-wasting or delay during the half-time transition.',
       icon: (
@@ -33,7 +23,7 @@ const Rules = () => {
       )
     },
     {
-      id: '04',
+      id: '03',
       title: 'Quick Match Transitions',
       english: 'No time-wasting is allowed between matches. Keep transition times strictly to what is needed for photos and the coin toss.',
       icon: (
@@ -43,7 +33,7 @@ const Rules = () => {
       )
     },
     {
-      id: '05',
+      id: '04',
       title: 'Final Break',
       english: 'A short recovery break will be permitted only directly before the grand final match.',
       icon: (
@@ -53,17 +43,7 @@ const Rules = () => {
       )
     },
     {
-      id: '06',
-      title: 'Spectator Limits',
-      english: 'Please do not invite any outside spectators or non-playing guests to the venue to help us keep limits manageable.',
-      icon: (
-        <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-      )
-    },
-    {
-      id: '07',
+      id: '05',
       title: 'Tournament: Group Stage',
       english: 'Teams 1, 3, and 5 are placed in Group A, and teams 2, 4, and 6 in Group B. Group stages follow a round-robin format (1v3, 2v4, 3v5, 4v6, 5v1, 6v2).',
       icon: (
@@ -73,7 +53,7 @@ const Rules = () => {
       )
     },
     {
-      id: '08',
+      id: '06',
       title: 'Tournament: Knockout Stage',
       english: 'The top 2 teams from each group qualify for the Playoffs. Semifinal 1 features Group A Topper vs Group B Runner-up, and Semifinal 2 features Group B Topper vs Group A Runner-up. The winners of both Semifinals advance to play the Grand Final match.',
       icon: (

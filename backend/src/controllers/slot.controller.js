@@ -5,7 +5,7 @@ import Slot from "../models/slot.model.js";
 // @access  Protected
 export const getSlots = async (req, res) => {
     try {
-        const slots = await Slot.find({}).sort({ index: 1 });
+        const slots = await Slot.find({}).sort({ index: 1 }).populate("players");
         res.status(200).json({
             success: true,
             slots,
@@ -68,7 +68,7 @@ export const updateSlot = async (req, res) => {
 
         const updateData = {};
         if (name !== undefined) updateData.name = name.trim();
-        if (players !== undefined) updateData.players = players;
+        if (players !== undefined) updateData.players = players.map(p => p._id || p);
         if (status !== undefined) updateData.status = status;
 
         const slot = await Slot.findOneAndUpdate(

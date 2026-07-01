@@ -4,7 +4,16 @@ import Slot from "../models/slot.model.js";
 
 // Helper to get or create the lottery singleton
 const getOrCreateLottery = async () => {
-    let state = await Lottery.findOne();
+    let state = await Lottery.findOne()
+        .populate("selectedPlayers")
+        .populate("draftPool")
+        .populate("draftLog.player")
+        .populate("currentPick.player");
+
+    if (state) {
+        await state.populate("draftResults.$*");
+    }
+
     if (!state) {
         state = await Lottery.create({
             status: "idle",
@@ -92,9 +101,15 @@ export const setupLottery = async (req, res) => {
             });
         }
 
-        const state = await getOrCreateLottery();
+        const spIds = selectedPlayers.map(p => p._id || p);
+
+        const state = await Lottery.findOne(); // Fetch without populate for updating
+        if (!state) {
+            // Handle if not created
+        }
+        
         state.status = "setup";
-        state.selectedPlayers = selectedPlayers;
+        state.selectedPlayers = spIds;
         state.selectedTeams = teamsToUse;
         state.playersPerTeam = count;
         state.draftLog = [];
@@ -107,9 +122,9 @@ export const setupLottery = async (req, res) => {
             const teamIndexStr = String(t.index);
             const teamName = t.teamName || t['team-name'] || `Team ${t.index}`;
             if (selectedPlayers.length > 0) {
-                initialResults.set(teamIndexStr, [selectedPlayers[idx]]);
+                initialResults.set(teamIndexStr, [spIds[idx]]);
                 state.draftLog.push({
-                    player: `${selectedPlayers[idx].name} (Captain)`,
+                    player: spIds[idx],
                     team: teamName,
                     timestamp: new Date()
                 });
@@ -129,10 +144,11 @@ export const setupLottery = async (req, res) => {
         state.markModified("currentPick");
 
         await state.save();
+        const populatedState = await getOrCreateLottery();
 
         res.status(200).json({
             success: true,
-            state
+            state: populatedState
         });
     } catch (error) {
         console.error("Error setting up lottery:", error);
@@ -173,7 +189,7 @@ export const loadSlot = async (req, res) => {
             });
         }
 
-        const state = await getOrCreateLottery();
+        const state = await Lottery.findOne(); // Fetch unpopulated
         if (state.status === "idle") {
             return res.status(400).json({
                 success: false,
@@ -194,10 +210,12 @@ export const loadSlot = async (req, res) => {
 
         state.markModified("draftPool");
         await state.save();
+        
+        const populatedState = await getOrCreateLottery();
 
         res.status(200).json({
             success: true,
-            state
+            state: populatedState
         });
     } catch (error) {
         console.error("Error loading slot:", error);
@@ -224,10 +242,11 @@ export const startLottery = async (req, res) => {
 
         state.status = "running";
         await state.save();
+        const populatedState = await getOrCreateLottery();
 
         res.status(200).json({
             success: true,
-            state
+            state: populatedState
         });
     } catch (error) {
         console.error("Error starting lottery:", error);
@@ -326,7 +345,7 @@ export const drawNextPlayer = async (req, res) => {
 
         // Log the pick
         state.draftLog.push({
-            player: player.name,
+            player: player,
             team: targetTeam.teamName,
             timestamp: new Date()
         });
@@ -347,8 +366,9 @@ export const drawNextPlayer = async (req, res) => {
         state.markModified("currentPick");
 
         await state.save();
+        const populatedState = await getOrCreateLottery();
 
-        res.status(200).json({ success: true, state });
+        res.status(200).json({ success: true, state: populatedState });
     } catch (error) {
         console.error("Error drawing player:", error);
         res.status(500).json({
@@ -364,7 +384,7 @@ export const drawNextPlayer = async (req, res) => {
 // @access  Protected (Admin only)
 export const resetLottery = async (req, res) => {
     try {
-        const state = await getOrCreateLottery();
+        const state = await Lottery.findOne();
         state.status = "idle";
         state.selectedPlayers = [];
         state.playersPerTeam = 0;
@@ -383,8 +403,10 @@ export const resetLottery = async (req, res) => {
 
         // Also reset all slots to "pending"
         await Slot.updateMany({}, { status: "pending" });
+        
+        const populatedState = await getOrCreateLottery();
 
-        res.status(200).json({ success: true, state });
+        res.status(200).json({ success: true, state: populatedState });
     } catch (error) {
         console.error("Error resetting lottery:", error);
         res.status(500).json({
@@ -403,8 +425,9 @@ export const completeLottery = async (req, res) => {
         const state = await getOrCreateLottery();
         state.status = "complete";
         await state.save();
+        const populatedState = await getOrCreateLottery();
 
-        res.status(200).json({ success: true, state });
+        res.status(200).json({ success: true, state: populatedState });
     } catch (error) {
         console.error("Error completing lottery:", error);
         res.status(500).json({
