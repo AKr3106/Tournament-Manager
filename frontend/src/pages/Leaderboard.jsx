@@ -33,33 +33,33 @@ const posBadge = (pos) => {
 
 // ── stat aggregator ───────────────────────────────────────────────────────────
 
-const buildStats = (fixtures, finalMatch) => {
-  const goals = {};   
-  const assists = {}; 
+const buildStats = (fixtures) => {
+  const goalsMap = {};   
+  const assistsMap = {}; 
 
   const process = (match) => {
-    if (!match) return;
-    (match.scorers || []).forEach(({ index, name }) => {
-      if (!index) return;
-      if (!goals[index]) goals[index] = { name, position: 'FW', count: 0 };
-      goals[index].count += 1;
-    });
-    (match.assists || []).forEach(({ index, name }) => {
-      if (!index) return;
-      if (!assists[index]) assists[index] = { name, position: 'FW', count: 0 };
-      assists[index].count += 1;
+    if (!match || !match.goals) return;
+    match.goals.forEach((g) => {
+      const scorerName = g.scorer;
+      if (scorerName) {
+        if (!goalsMap[scorerName]) goalsMap[scorerName] = { name: scorerName, position: 'FW', count: 0 };
+        goalsMap[scorerName].count += 1;
+      }
+      
+      const assistName = g.assist;
+      if (assistName && assistName !== 'None') {
+        if (!assistsMap[assistName]) assistsMap[assistName] = { name: assistName, position: 'FW', count: 0 };
+        assistsMap[assistName].count += 1;
+      }
     });
   };
 
   fixtures.forEach(process);
-  if (finalMatch) process(finalMatch);
 
   const toRanked = (map) =>
-    Object.entries(map)
-      .map(([index, data]) => ({ index: parseInt(index, 10), ...data }))
-      .sort((a, b) => b.count - a.count);
+    Object.values(map).sort((a, b) => b.count - a.count);
 
-  return { goalsList: toRanked(goals), assistsList: toRanked(assists) };
+  return { goalsList: toRanked(goalsMap), assistsList: toRanked(assistsMap) };
 };
 
 // ── table ─────────────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ const buildStats = (fixtures, finalMatch) => {
 const StatTable = ({ title, emoji, data, accentColor, players, showFull }) => {
   // Merge positions from players API
   const enriched = data.map((row) => {
-    const found = players.find((p) => p.index === row.index);
+    const found = players.find((p) => p.name === row.name);
     return { ...row, position: found?.position || row.position };
   });
 
@@ -96,7 +96,7 @@ const StatTable = ({ title, emoji, data, accentColor, players, showFull }) => {
             const rank = idx + 1;
             return (
               <div
-                key={row.index}
+                key={row.name}
                 className={`flex items-center gap-4 px-6 py-3.5 transition-colors hover:bg-white/2 ${rank === 1 ? 'bg-amber-500/5' : ''}`}
               >
                 <div className="w-8 text-center shrink-0">
@@ -134,22 +134,24 @@ const Leaderboard = () => {
   const [goalsList, setGoalsList] = useState([]);
   const [assistsList, setAssistsList] = useState([]);
 
-  const recompute = () => {
-    // If user tries to load s1, return empty data (since it's locked/blocked)
+  const fetchFixturesAndCompute = async () => {
     if (selectedSeason === 's1') {
       setGoalsList([]);
       setAssistsList([]);
       return;
     }
 
-    const raw = localStorage.getItem('rkm_s2_fixtures');
-    const rawFinal = localStorage.getItem('rkm_s2_finalMatch');
-    const fixtures = raw ? JSON.parse(raw) : [];
-    const finalMatch = rawFinal ? JSON.parse(rawFinal) : null;
-    
-    const { goalsList: g, assistsList: a } = buildStats(fixtures, finalMatch);
-    setGoalsList(g);
-    setAssistsList(a);
+    try {
+      const res = await fetch(`${API_BASE}/fixtures/s2`);
+      const data = await res.json();
+      if (data.success) {
+        const { goalsList: g, assistsList: a } = buildStats(data.data);
+        setGoalsList(g);
+        setAssistsList(a);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
@@ -158,15 +160,7 @@ const Leaderboard = () => {
       .then((d) => d.success && setPlayers(d.players))
       .catch(console.error);
 
-    recompute();
-
-    window.addEventListener('storage', recompute);
-    window.addEventListener('local-ui-storage-update', recompute);
-    
-    return () => {
-      window.removeEventListener('storage', recompute);
-      window.removeEventListener('local-ui-storage-update', recompute);
-    };
+    fetchFixturesAndCompute();
   }, [selectedSeason]);
 
   const totalGoals = goalsList.reduce((s, r) => s + r.count, 0);

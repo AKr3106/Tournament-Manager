@@ -12,6 +12,12 @@ const Tournament = () => {
   const [selectedTeams, setSelectedTeams] = useState([]);
   const [expandedMatchId, setExpandedMatchId] = useState(null);
 
+  // Fixtures State
+  const [fixtures, setFixtures] = useState([]);
+  const [sf1Match, setSf1Match] = useState({ id: 'Semifinal 1', team1: 'Group A Topper', team2: 'Group B Runner-up', score1: '', score2: '', penaltyScore1: '', penaltyScore2: '', coinTossWinner: '', goals: [], motm: '' });
+  const [sf2Match, setSf2Match] = useState({ id: 'Semifinal 2', team1: 'Group B Topper', team2: 'Group A Runner-up', score1: '', score2: '', penaltyScore1: '', penaltyScore2: '', coinTossWinner: '', goals: [], motm: '' });
+  const [finalMatch, setFinalMatch] = useState({ id: 'Grand Final', team1: 'SF1 Winner', team2: 'SF2 Winner', score1: '', score2: '', penaltyScore1: '', penaltyScore2: '', coinTossWinner: '', goals: [], motm: '' });
+
   // Global Awards State
   const [ballAward, setBallAward] = useState('');
   const [bootAward, setBootAward] = useState('');
@@ -20,10 +26,11 @@ const Tournament = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [playersRes, teamsRes, lotteryRes] = await Promise.all([
+        const [playersRes, teamsRes, lotteryRes, fixturesRes] = await Promise.all([
           fetch(`${API_BASE}/players`),
           fetch(`${API_BASE}/teams`),
-          fetch(`${API_BASE}/lottery/state`, { credentials: "include" }).catch(() => null)
+          fetch(`${API_BASE}/lottery/state`, { credentials: "include" }).catch(() => null),
+          fetch(`${API_BASE}/fixtures/s2`)
         ]);
 
         const playersData = await playersRes.json();
@@ -39,6 +46,21 @@ const Tournament = () => {
             setLotteryStatus(lotteryData.state.status || 'idle');
             setSelectedTeams(lotteryData.state.selectedTeams || []);
           }
+        }
+
+        const fixturesData = await fixturesRes.json();
+        if (fixturesData.success) {
+          const allFixtures = fixturesData.data;
+          const groupFixtures = allFixtures.filter(f => f.id.startsWith('Match'));
+          setFixtures(groupFixtures.length > 0 ? groupFixtures : []);
+          
+          const s1 = allFixtures.find(f => f.id === 'Semifinal 1');
+          const s2 = allFixtures.find(f => f.id === 'Semifinal 2');
+          const fin = allFixtures.find(f => f.id === 'Grand Final');
+          
+          if (s1) setSf1Match(s1);
+          if (s2) setSf2Match(s2);
+          if (fin) setFinalMatch(fin);
         }
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -79,74 +101,13 @@ const Tournament = () => {
     };
   });
 
-  const [fixtures, setFixtures] = useState(() => {
-    const saved = localStorage.getItem('rkm_s2_fixtures');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return [
-      { id: 'Match 1', team1: 'Team A', team2: 'Team C', group: 'A', format: '1 v 3', score1: '', score2: '', goals: [], motm: '' },
-      { id: 'Match 2', team1: 'Team B', team2: 'Team D', group: 'B', format: '2 v 4', score1: '', score2: '', goals: [], motm: '' },
-      { id: 'Match 3', team1: 'Team C', team2: 'Team E', group: 'A', format: '3 v 5', score1: '', score2: '', goals: [], motm: '' },
-      { id: 'Match 4', team1: 'Team D', team2: 'Team F', group: 'B', format: '4 v 6', score1: '', score2: '', goals: [], motm: '' },
-      { id: 'Match 5', team1: 'Team E', team2: 'Team A', group: 'A', format: '5 v 1', score1: '', score2: '', goals: [], motm: '' },
-      { id: 'Match 6', team1: 'Team F', team2: 'Team B', group: 'B', format: '6 v 2', score1: '', score2: '', goals: [], motm: '' }
-    ];
-  });
-
-  const [finalMatch, setFinalMatch] = useState(() => {
-    const saved = localStorage.getItem('rkm_s2_finalMatch');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return { id: 'Grand Final', team1: 'SF1 Winner', team2: 'SF2 Winner', score1: '', score2: '', goals: [], motm: '' };
-  });
-
-  const [sf1Match, setSf1Match] = useState(() => {
-    const saved = localStorage.getItem('rkm_s2_sf1Match');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return { id: 'Semifinal 1', team1: 'Group A Topper', team2: 'Group B Runner-up', score1: '', score2: '', goals: [], motm: '' };
-  });
-
-  const [sf2Match, setSf2Match] = useState(() => {
-    const saved = localStorage.getItem('rkm_s2_sf2Match');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return { id: 'Semifinal 2', team1: 'Group B Topper', team2: 'Group A Runner-up', score1: '', score2: '', goals: [], motm: '' };
-  });
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const savedFixtures = localStorage.getItem('rkm_s2_fixtures');
-      if (savedFixtures) setFixtures(JSON.parse(savedFixtures));
-      
-      const savedSf1 = localStorage.getItem('rkm_s2_sf1Match');
-      if (savedSf1) setSf1Match(JSON.parse(savedSf1));
-      
-      const savedSf2 = localStorage.getItem('rkm_s2_sf2Match');
-      if (savedSf2) setSf2Match(JSON.parse(savedSf2));
-      
-      const savedFinal = localStorage.getItem('rkm_s2_finalMatch');
-      if (savedFinal) setFinalMatch(JSON.parse(savedFinal));
-
-      setBallAward(localStorage.getItem('rkm_s2_goldenBallName') || '');
-      setBootAward(localStorage.getItem('rkm_s2_goldenBootName') || '');
-      setGlovesAward(localStorage.getItem('rkm_s2_goldenGlovesName') || '');
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
   const getFixtureTeams = (fixtureIndex) => {
     const mappings = [[0, 2], [1, 3], [2, 4], [3, 5], [4, 0], [5, 1]];
     const map = mappings[fixtureIndex];
     if (map && teams.length >= 6) {
       return { team1: teams[map[0]]?.name, team2: teams[map[1]]?.name };
     }
-    return { team1: `Team ${String.fromCharCode(65 + map[0])}`, team2: `Team ${String.fromCharCode(65 + map[1])}` };
+    return { team1: `Team ${String.fromCharCode(65 + (map?.[0] || 0))}`, team2: `Team ${String.fromCharCode(65 + (map?.[1] || 1))}` };
   };
 
   const teamBgColors = ['bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-indigo-500'];
@@ -194,7 +155,6 @@ const Tournament = () => {
   };
 
   const { groupA, groupB } = calculateStandings();
-  const isGroupStageComplete = fixtures.every(f => f.score1 !== '' && f.score2 !== '');
   const hasGroupStageStarted = fixtures.some(f => f.score1 !== '' && f.score2 !== '' && f.score1 !== null && f.score2 !== null);
   const resolvedTopperA = groupA[0]?.name || 'Group A Topper';
   const resolvedRunnerA = groupA[1]?.name || 'Group A Runner-up';
@@ -205,7 +165,7 @@ const Tournament = () => {
   const isSf2Complete = sf2Match.score1 !== '' && sf2Match.score2 !== '';
 
   const getWinner = (match, t1, t2) => {
-    if (match.score1 === '' || match.score2 === '') return null;
+    if (!match || match.score1 === '' || match.score2 === '') return null;
     const s1 = parseInt(match.score1, 10);
     const s2 = parseInt(match.score2, 10);
     if (s1 > s2) return t1;
@@ -216,11 +176,14 @@ const Tournament = () => {
       if (p1 > p2) return t1;
       if (p1 < p2) return t2;
     }
+    if (match.coinTossWinner && match.coinTossWinner !== '') {
+      return match.coinTossWinner;
+    }
     return null;
   };
 
-  const resolvedSf1Winner = getWinner(sf1Match, resolvedTopperA, resolvedRunnerB) || 'SF1 Winner';
-  const resolvedSf2Winner = getWinner(sf2Match, resolvedTopperB, resolvedRunnerA) || 'SF2 Winner';
+  const resolvedSf1Winner = getWinner(sf1Match, resolvedTopperA, resolvedRunnerB) || 'TBD';
+  const resolvedSf2Winner = getWinner(sf2Match, resolvedTopperB, resolvedRunnerA) || 'TBD';
 
   const renderStatsDropdown = (match, isPlayed) => {
     if (!isPlayed) {
@@ -391,7 +354,6 @@ const Tournament = () => {
       {/* Fixtures Timeline Section */}
       <div className="bg-slate-900/20 border border-white/10 rounded-3xl p-2 sm:p-6 md:p-8 mb-12">
         <h4 className="font-bold text-lg text-white border-b border-white/5 pb-3 mb-6">Fixture Schedule</h4>
-        {/* Shifted outer grid wrapper to lg:grid-cols-2 to render single file on tablet sizes verbatim[cite: 7] */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {fixtures.map((fixture, index) => {
             const { team1: displayTeam1, team2: displayTeam2 } = getFixtureTeams(index);
@@ -429,7 +391,9 @@ const Tournament = () => {
                       <span className="flex-1 text-right wrap-break-words whitespace-normal">{displayTeam1}</span>
                       <div className="shrink-0 mx-0.5 sm:mx-1">
                         {isPlayed ? (
-                          <span className="text-[11px] sm:text-sm font-extrabold text-indigo-400 bg-indigo-500/10 px-1.5 sm:px-2.5 py-0.5 rounded font-mono whitespace-nowrap">{fixture.score1} — {fixture.score2}</span>
+                          <span className="text-[11px] sm:text-sm font-extrabold text-indigo-400 bg-indigo-500/10 px-1.5 sm:px-2.5 py-0.5 rounded font-mono whitespace-nowrap flex flex-col items-center">
+                            <span>{fixture.score1} — {fixture.score2}</span>
+                          </span>
                         ) : (
                           <span className="text-[10px] text-indigo-400 bg-indigo-500/5 border border-indigo-500/10 px-1.5 py-0.5 rounded font-bold whitespace-nowrap">VS</span>
                         )}
@@ -457,7 +421,6 @@ const Tournament = () => {
 
         {/* Playoffs Knockout Containers */}
         <div className="mt-8 space-y-4">
-          {/* Shifted outer grid wrapper to lg:grid-cols-2 to render single file on tablet sizes verbatim[cite: 7] */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Semifinal 1 Accordion Row */}
             <div className="flex flex-col bg-slate-950/60 border border-indigo-500/20 rounded-2xl overflow-hidden self-start w-full">
@@ -484,16 +447,21 @@ const Tournament = () => {
                   </div>
                   
                   <div className="flex items-center font-semibold text-xs sm:text-sm text-slate-200 flex-1 min-w-0 gap-1 sm:gap-3">
-                    <span className="flex-1 text-right wrap-break-words whitespace-normal">{hasGroupStageStarted ? resolvedTopperA : "1A"}</span>
+                    <span className="flex-1 text-right wrap-break-words whitespace-normal">{resolvedTopperA}</span>
                     <div className="shrink-0 mx-0.5 sm:mx-1">
-                      <span className="font-mono bg-indigo-500/10 px-1.5 sm:px-2 py-0.5 rounded text-indigo-400 text-[11px] sm:text-xs whitespace-nowrap flex flex-col sm:flex-row items-center gap-0.5">
-                        <span>{sf1Match.score1 !== '' ? `${sf1Match.score1} — ${sf1Match.score2}` : 'VS'}</span>
-                        {sf1Match.score1 !== '' && sf1Match.penaltyScore1 !== undefined && sf1Match.penaltyScore2 !== undefined && sf1Match.penaltyScore1 !== '' && sf1Match.penaltyScore2 !== '' && (
-                          <span className="text-[9px] sm:text-[10px] text-purple-300 sm:ml-1">({sf1Match.penaltyScore1}-{sf1Match.penaltyScore2} P)</span>
+                      <span className="font-mono bg-indigo-500/10 px-1.5 sm:px-2 py-0.5 rounded text-indigo-400 text-[11px] sm:text-xs flex flex-col items-center">
+                        <span className="flex flex-row items-center gap-1 whitespace-nowrap">
+                          <span>{sf1Match.score1 !== '' ? `${sf1Match.score1} — ${sf1Match.score2}` : 'VS'}</span>
+                          {sf1Match.score1 !== '' && sf1Match.penaltyScore1 !== undefined && sf1Match.penaltyScore2 !== undefined && sf1Match.penaltyScore1 !== '' && sf1Match.penaltyScore2 !== '' && (
+                            <span className="text-[9px] sm:text-[10px] text-purple-300">({sf1Match.penaltyScore1}-{sf1Match.penaltyScore2} PK)</span>
+                          )}
+                        </span>
+                        {sf1Match.coinTossWinner && sf1Match.coinTossWinner !== '' && (
+                           <span className="text-[9px] sm:text-[10px] text-amber-400 mt-1 whitespace-nowrap bg-amber-900/30 px-1 py-0.5 rounded">[Decided via Coin Toss]</span>
                         )}
                       </span>
                     </div>
-                    <span className="flex-1 text-left wrap-break-words whitespace-normal">{hasGroupStageStarted ? resolvedRunnerB : "2B"}</span>
+                    <span className="flex-1 text-left wrap-break-words whitespace-normal">{resolvedRunnerB}</span>
                   </div>
                 </div>
                 
@@ -533,16 +501,21 @@ const Tournament = () => {
                   </div>
                   
                   <div className="flex items-center font-semibold text-xs sm:text-sm text-slate-200 flex-1 min-w-0 gap-1 sm:gap-3">
-                    <span className="flex-1 text-right wrap-reak-words whitespace-normal">{hasGroupStageStarted ? resolvedTopperB : "1B"}</span>
+                    <span className="flex-1 text-right wrap-break-words whitespace-normal">{resolvedTopperB}</span>
                     <div className="shrink-0 mx-0.5 sm:mx-1">
-                      <span className="font-mono bg-indigo-500/10 px-1.5 sm:px-2 py-0.5 rounded text-indigo-400 text-[11px] sm:text-xs whitespace-nowrap flex flex-col sm:flex-row items-center gap-0.5">
-                        <span>{sf2Match.score1 !== '' ? `${sf2Match.score1} — ${sf2Match.score2}` : 'VS'}</span>
-                        {sf2Match.score1 !== '' && sf2Match.penaltyScore1 !== undefined && sf2Match.penaltyScore2 !== undefined && sf2Match.penaltyScore1 !== '' && sf2Match.penaltyScore2 !== '' && (
-                          <span className="text-[9px] sm:text-[10px] text-purple-300 sm:ml-1">({sf2Match.penaltyScore1}-{sf2Match.penaltyScore2} P)</span>
+                      <span className="font-mono bg-indigo-500/10 px-1.5 sm:px-2 py-0.5 rounded text-indigo-400 text-[11px] sm:text-xs flex flex-col items-center">
+                        <span className="flex flex-row items-center gap-1 whitespace-nowrap">
+                          <span>{sf2Match.score1 !== '' ? `${sf2Match.score1} — ${sf2Match.score2}` : 'VS'}</span>
+                          {sf2Match.score1 !== '' && sf2Match.penaltyScore1 !== undefined && sf2Match.penaltyScore2 !== undefined && sf2Match.penaltyScore1 !== '' && sf2Match.penaltyScore2 !== '' && (
+                            <span className="text-[9px] sm:text-[10px] text-purple-300">({sf2Match.penaltyScore1}-{sf2Match.penaltyScore2} PK)</span>
+                          )}
+                        </span>
+                        {sf2Match.coinTossWinner && sf2Match.coinTossWinner !== '' && (
+                           <span className="text-[9px] sm:text-[10px] text-amber-400 mt-1 whitespace-nowrap bg-amber-900/30 px-1 py-0.5 rounded">[Decided via Coin Toss]</span>
                         )}
                       </span>
                     </div>
-                    <span className="flex-1 text-left wrap-break-words whitespace-normal">{hasGroupStageStarted ? resolvedRunnerA : "2A"}</span>
+                    <span className="flex-1 text-left wrap-break-words whitespace-normal">{resolvedRunnerA}</span>
                   </div>
                 </div>
                 
@@ -585,10 +558,15 @@ const Tournament = () => {
                 <div className="flex items-center font-bold text-xs sm:text-sm text-slate-200 flex-1 min-w-0 gap-1 sm:gap-3">
                   <span className="flex-1 text-right wrap-break-words whitespace-normal">{resolvedSf1Winner}</span>
                   <div className="shrink-0 mx-0.5 sm:mx-1">
-                    <span className="font-mono bg-purple-500/20 border border-purple-500/30 px-2 sm:px-3 py-0.5 rounded text-purple-300 text-xs sm:text-sm whitespace-nowrap flex flex-col sm:flex-row items-center gap-0.5">
-                      <span>{finalMatch.score1 !== '' && finalMatch.score2 !== '' ? `${finalMatch.score1} — ${finalMatch.score2}` : 'VS'}</span>
-                      {finalMatch.score1 !== '' && finalMatch.penaltyScore1 !== undefined && finalMatch.penaltyScore2 !== undefined && finalMatch.penaltyScore1 !== '' && finalMatch.penaltyScore2 !== '' && (
-                        <span className="text-[9px] sm:text-[10px] text-amber-300 sm:ml-1">({finalMatch.penaltyScore1}-{finalMatch.penaltyScore2} P)</span>
+                    <span className="font-mono bg-purple-500/20 border border-purple-500/30 px-2 sm:px-3 py-0.5 rounded text-purple-300 text-xs sm:text-sm flex flex-col items-center">
+                      <span className="flex flex-row items-center gap-1 whitespace-nowrap">
+                        <span>{finalMatch.score1 !== '' && finalMatch.score2 !== '' ? `${finalMatch.score1} — ${finalMatch.score2}` : 'VS'}</span>
+                        {finalMatch.score1 !== '' && finalMatch.penaltyScore1 !== undefined && finalMatch.penaltyScore2 !== undefined && finalMatch.penaltyScore1 !== '' && finalMatch.penaltyScore2 !== '' && (
+                          <span className="text-[9px] sm:text-[10px] text-amber-300">({finalMatch.penaltyScore1}-{finalMatch.penaltyScore2} PK)</span>
+                        )}
+                      </span>
+                      {finalMatch.coinTossWinner && finalMatch.coinTossWinner !== '' && (
+                         <span className="text-[9px] sm:text-[10px] text-amber-400 mt-1 whitespace-nowrap bg-amber-900/30 px-1 py-0.5 rounded">[Decided via Coin Toss]</span>
                       )}
                     </span>
                   </div>

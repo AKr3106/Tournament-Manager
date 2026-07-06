@@ -65,30 +65,34 @@ Tournament-Manager/
 │       │   ├── players.model.js # Player schema (index, name, position: FW/DF/GK)
 │       │   ├── teams.model.js   # Team schema
 │       │   ├── lottery.model.js # Lottery state schema
-│       │   └── slot.model.js    # Slot booking schema
+│       │   ├── slot.model.js    # Slot booking schema
+│       │   └── fixture.model.js # Tournament match and score schema
 │       ├── routes/
 │       │   ├── auth.routes.js
 │       │   ├── player.route.js
 │       │   ├── team.route.js
 │       │   ├── lottery.route.js
-│       │   └── slot.route.js
+│       │   ├── slot.route.js
+│       │   └── fixture.route.js # Routes for fetching and updating match scores
 │       └── middleware/          # Auth and role-check middleware
 │
 └── frontend/
     └── src/
         ├── App.jsx              # Routes and layout wrapper
         ├── index.css            # Global styles, theme overrides, scrollbar removal
+        ├── api.js               # API base URL configuration
         ├── components/
         │   ├── Navbar.jsx       # Responsive nav with theme toggle and mobile drawer
+        │   ├── MatchManager.jsx # Admin panel workspace for live match scoring
         │   ├── Hero.jsx
         │   ├── TeamCard.jsx
         │   ├── PlayerCard.jsx
         │   ├── SeasonButton.jsx
-        │   ├── AnimatedBackground.jsx
         │   └── ...
         └── pages/
             ├── Tournament.jsx   # Season 2 (live) tournament page
             ├── TournamentS1.jsx # Season 1 (archived, hardcoded) tournament page
+            ├── Leaderboard.jsx  # Global rankings and player statistics
             ├── Lottery.jsx      # Live lottery draft viewer
             ├── AdminLottery.jsx # Admin lottery control panel
             ├── Admin.jsx        # Admin management (players, teams, slots)

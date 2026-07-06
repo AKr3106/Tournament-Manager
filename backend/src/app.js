@@ -7,6 +7,7 @@ import playerRouter from "./routes/player.route.js";
 import teamRouter from "./routes/team.route.js";
 import lotteryRouter from "./routes/lottery.route.js";
 import slotRouter from "./routes/slot.route.js";
+import fixtureRouter from "./routes/fixture.route.js";
 
 dotenv.config();
 
@@ -54,5 +55,6 @@ app.use("/api/players", playerRouter);
 app.use("/api/teams", teamRouter);
 app.use("/api/lottery", lotteryRouter);
 app.use("/api/slots", slotRouter);
+app.use("/api/fixtures", fixtureRouter);
 
 export default app;
