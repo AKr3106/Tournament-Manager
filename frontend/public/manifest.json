@@ -1,0 +1,16 @@
+{
+  "short_name": "rkm-league",
+  "name": "rkm-league",
+  "icons": [
+    {
+      "src": "/fb_img.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "display": "standalone"
+}
