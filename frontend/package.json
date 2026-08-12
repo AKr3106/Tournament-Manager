@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm run generate-icons || true",
     "build": "vite build",
+    "generate-icons": "node scripts/generate-icons.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -26,5 +28,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "vite": "^8.0.12"
+    ,
+    "sharp": "^0.32.1"
   }
 }
